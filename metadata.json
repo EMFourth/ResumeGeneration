@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Resume Gen App",
+  "description": "An application that uses AI to rework a user's resume to perfectly match a specific job posting. It also generates a tailored cover letter.",
+  "requestFramePermissions": []
+}
