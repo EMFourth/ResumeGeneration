@@ -1,8 +1,9 @@
 {
-  "name": "copy-of-resume-gen-app",
+  "name": "resume-gen-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://www.resume-gen.app",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
