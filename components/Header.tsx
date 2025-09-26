@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { EzoicAd } from './EzoicAd';
 
 export const Header: React.FC = () => {
   return (
@@ -11,6 +12,7 @@ export const Header: React.FC = () => {
         <p className="mt-2 text-md text-slate-500">
           We rewrite your resume to make you the ideal candidate for any position.
         </p>
+        <EzoicAd placeholder="header-banner" size="small" className="mt-4" />
       </div>
     </header>
   );

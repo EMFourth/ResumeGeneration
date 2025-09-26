@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { ResumeInput } from './components/ResumeInput';
 import { JobDescriptionInput } from './components/JobDescriptionInput';
@@ -10,7 +10,8 @@ import { SparklesIcon } from './components/icons/SparklesIcon';
 import { generateTailoredResume, generateCoverLetter } from './services/geminiService';
 import { InitialStatePlaceholder } from './components/InitialStatePlaceholder';
 import { sampleResumeHtml } from './components/SampleResume';
-import { GoogleAd } from './components/GoogleAd';
+import { EzoicAd } from './components/EzoicAd';
+import { initializeEzoicAds } from './utils/ezoicConfig';
 
 const App: React.FC = () => {
   const [resumeText, setResumeText] = useState('');
@@ -25,6 +26,11 @@ const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generationFailed, setGenerationFailed] = useState(false);
+
+  // Initialize Ezoic ads on component mount
+  useEffect(() => {
+    initializeEzoicAds();
+  }, []);
 
   const handleResumeParsed = useCallback((data: { text: string; pageCount: number | null }) => {
     setResumeText(data.text);
@@ -101,7 +107,7 @@ const App: React.FC = () => {
             <ResumeInput onParsed={handleResumeParsed} onFileChange={setResumeFileName} />
             <JobDescriptionInput value={jobDescription} onChange={setJobDescription} />
             {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
-            <GoogleAd />
+            <EzoicAd placeholder="resume-builder-sidebar" size="medium" />
             <button
               onClick={handleGenerateResume}
               disabled={isLoadingResume || !resumeText || !jobDescription}
@@ -124,6 +130,7 @@ const App: React.FC = () => {
           {/* Output Section */}
           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 min-h-[600px] flex flex-col">
             <h2 className="text-2xl font-bold text-slate-700 mb-4">AI-Powered Result</h2>
+            {!isLoadingResume && <EzoicAd placeholder="resume-result-top" size="small" />}
             {isLoadingResume ? (
               <div className="flex flex-col items-center justify-center flex-grow text-slate-500">
                 <Spinner />
@@ -141,6 +148,7 @@ const App: React.FC = () => {
             ) : (
                <InitialStatePlaceholder />
             )}
+            {!isLoadingResume && generatedResumeHtml && <EzoicAd placeholder="resume-result-bottom" size="medium" />}
           </div>
         </div>
       </main>
