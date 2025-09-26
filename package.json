@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "update-ads-txt": "node scripts/update-ads-txt.js",
+    "prebuild": "npm run update-ads-txt || echo 'Warning: Could not update ads.txt'"
   },
   "dependencies": {
     "react": "^19.1.1",
