@@ -57,7 +57,20 @@ const App: React.FC = () => {
     } catch (e) {
       // If the API call itself fails, fall back to the sample.
       console.error("An error occurred during resume generation:", e);
-      setError('An error occurred while generating the resume. Showing a sample instead.');
+      let errorMessage = 'An error occurred while generating the resume. Showing a sample instead.';
+      
+      // Provide more specific error messages
+      if (e instanceof Error) {
+        if (e.message.includes('API_KEY') || e.message.includes('GEMINI_API_KEY')) {
+          errorMessage = 'API key not configured. Please set up your Gemini API key to generate personalized resumes. Showing a sample instead.';
+        } else if (e.message.includes('quota') || e.message.includes('billing')) {
+          errorMessage = 'API quota exceeded or billing issue. Please check your Google AI Studio account. Showing a sample instead.';
+        } else if (e.message.includes('network') || e.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection and try again. Showing a sample instead.';
+        }
+      }
+      
+      setError(errorMessage);
       setGenerationFailed(true);
       setGeneratedResumeHtml(sampleResumeHtml);
       setGenerationExplanation('');
