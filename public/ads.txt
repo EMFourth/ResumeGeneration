@@ -1,0 +1,18 @@
+# Ads.txt file for resumegen.example.com
+# 
+# This file was generated as a placeholder because the Ezoic ads.txt service
+# could not be reached or the domain is not yet configured with Ezoic.
+# 
+# To complete the setup:
+# 1. Ensure your domain (resumegen.example.com) is registered with Ezoic
+# 2. Configure Ezoic ads.txt management for your site
+# 3. Re-run this script: npm run update-ads-txt resumegen.example.com
+# 
+# Alternative setup methods:
+# - Use server redirects (see vercel.json or _redirects files)
+# - Manually copy content from: https://srv.adstxtmanager.com/19390/resumegen.example.com
+# 
+# For more information, see EZOIC_SETUP.md
+
+# Placeholder entry - replace with actual Ezoic ads.txt content
+# google.com, pub-7524647518323966, DIRECT, f08c47fec0942fa0

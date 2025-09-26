@@ -1,0 +1,5 @@
+# Netlify redirects file
+# Redirect ads.txt to Ezoic ads.txt manager
+# Replace resumegen.example.com with your actual domain name
+
+/ads.txt https://srv.adstxtmanager.com/19390/resumegen.example.com 301!
