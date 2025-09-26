@@ -1,0 +1,80 @@
+/* Custom CSS for Resume Generation App */
+
+/* Resume Layout Styles */
+.resume-layout {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.4;
+  background: white;
+}
+
+.resume-layout .left-column {
+  width: 35%;
+  padding: 20px;
+  vertical-align: top;
+  background-color: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+}
+
+.resume-layout .right-column {
+  width: 65%;
+  padding: 20px;
+  vertical-align: top;
+}
+
+.resume-layout h1 {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+  color: #1f2937;
+}
+
+.resume-layout h2 {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 20px 0 8px 0;
+  color: #374151;
+  border-bottom: 1px solid #d1d5db;
+  padding-bottom: 4px;
+}
+
+.resume-layout h3 {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 12px 0 4px 0;
+  color: #4b5563;
+}
+
+.resume-layout p {
+  margin: 4px 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.resume-layout ul {
+  margin: 8px 0;
+  padding-left: 16px;
+}
+
+.resume-layout li {
+  margin: 2px 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.resume-layout div {
+  margin-bottom: 12px;
+}
+
+/* Print styles */
+@media print {
+  .resume-layout {
+    font-size: 12px;
+  }
+  
+  .resume-layout .left-column,
+  .resume-layout .right-column {
+    padding: 15px;
+  }
+}
