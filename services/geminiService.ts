@@ -9,7 +9,11 @@ let ai: GoogleGenAI | null = null;
  */
 const getAiClient = (): GoogleGenAI => {
   if (!ai) {
-    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY environment variable is not set");
+    }
+    ai = new GoogleGenAI({ apiKey });
   }
   return ai;
 };

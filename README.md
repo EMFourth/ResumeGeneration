@@ -50,11 +50,29 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Qof2Iul3CK3UQFsc-cpVpl
 
 ## Deployment
 
-For Vercel deployment, add your `GEMINI_API_KEY` to your Vercel environment variables:
+### Vercel Deployment (Recommended)
 
-1. Go to your Vercel project dashboard
-2. Navigate to Settings → Environment Variables
-3. Add `GEMINI_API_KEY` with your API key value
+This project is optimized for Vercel deployment with the included `vercel.json` configuration.
+
+1. **Connect your GitHub repository to Vercel**
+2. **Set up environment variables in Vercel:**
+   - Go to your Vercel project dashboard
+   - Navigate to Settings → Environment Variables
+   - Add `GEMINI_API_KEY` with your API key value
+3. **Deploy automatically** - Vercel will build and deploy on every push to main
+
+### Environment Variables
+
+- `GEMINI_API_KEY`: Your Google Gemini API key (required)
+- The application also supports `API_KEY` for backward compatibility
+
+### Build Optimization
+
+The project includes several optimizations:
+- **Code splitting**: Vendor and AI libraries are bundled separately
+- **Environment variable handling**: Proper handling for production builds
+- **Security headers**: Added via `vercel.json` for enhanced security
+- **Asset caching**: Optimized caching for static assets
 
 ## Build for Production
 
