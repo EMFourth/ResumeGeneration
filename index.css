@@ -78,3 +78,28 @@
     padding: 15px;
   }
 }
+
+/* Mobile responsiveness for resume layout */
+@media (max-width: 768px) {
+  .resume-layout .left-column,
+  .resume-layout .right-column {
+    padding: 12px;
+  }
+  
+  .resume-layout h1 {
+    font-size: 20px;
+  }
+  
+  .resume-layout h2 {
+    font-size: 14px;
+  }
+  
+  .resume-layout h3 {
+    font-size: 12px;
+  }
+  
+  .resume-layout p,
+  .resume-layout li {
+    font-size: 11px;
+  }
+}

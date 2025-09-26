@@ -107,10 +107,10 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6 md:gap-8">
           {/* Input Section */}
-          <div className="flex flex-col gap-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h2 className="text-2xl font-bold text-slate-700">Your Information</h2>
+          <div className="flex flex-col gap-4 md:gap-6 bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-700">Your Information</h2>
             <ResumeInput onParsed={handleResumeParsed} onFileChange={setResumeFileName} />
             <JobDescriptionInput value={jobDescription} onChange={setJobDescription} />
             {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
@@ -118,7 +118,7 @@ const App: React.FC = () => {
             <button
               onClick={handleGenerateResume}
               disabled={isLoadingResume || !resumeText || !jobDescription}
-              className="flex items-center justify-center gap-2 w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="flex items-center justify-center gap-2 w-full bg-indigo-600 text-white font-semibold py-4 px-4 rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[56px]"
             >
               {isLoadingResume ? (
                 <>
@@ -135,8 +135,8 @@ const App: React.FC = () => {
           </div>
 
           {/* Output Section */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 min-h-[600px] flex flex-col">
-            <h2 className="text-2xl font-bold text-slate-700 mb-4">AI-Powered Result</h2>
+          <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 min-h-[600px] flex flex-col">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-700 mb-4">AI-Powered Result</h2>
             {isLoadingResume ? (
               <div className="flex flex-col items-center justify-center flex-grow text-slate-500">
                 <Spinner />

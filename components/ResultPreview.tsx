@@ -30,12 +30,21 @@ const resumeStyles = `
   }
   .resume-container {
     background-color: white;
-    width: 8.5in;
+    width: 100%;
+    max-width: 8.5in;
     min-height: 11in;
     margin: 0 auto;
     padding: 0;
     box-sizing: border-box;
     border: 3px solid #4a90e2; /* Blue border */
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .resume-container {
+      border: 2px solid #4a90e2;
+      min-height: auto;
+    }
   }
   .resume-layout {
     width: 100%;
@@ -51,6 +60,13 @@ const resumeStyles = `
     background-color: #4a90e2; /* Blue background */
     color: white;
     padding: 0.6in 0.5in;
+  }
+  
+  /* Mobile responsiveness for left column */
+  @media (max-width: 768px) {
+    .left-column {
+      padding: 0.3in 0.3in;
+    }
   }
   .left-column h2 {
     font-family: 'Segoe UI', sans-serif;
@@ -89,6 +105,13 @@ const resumeStyles = `
     vertical-align: top;
     padding: 0.6in 0.7in;
   }
+  
+  /* Mobile responsiveness for right column */
+  @media (max-width: 768px) {
+    .right-column {
+      padding: 0.3in 0.4in;
+    }
+  }
   .right-column h1 { /* Candidate Name */
     font-family: 'Garamond', 'Times New Roman', Times, serif;
     font-size: 2.8rem;
@@ -96,6 +119,33 @@ const resumeStyles = `
     color: #2d3748;
     margin: 0;
     padding: 0;
+  }
+  
+  /* Mobile typography adjustments */
+  @media (max-width: 768px) {
+    .right-column h1 {
+      font-size: 2.2rem;
+    }
+    
+    .left-column h2 {
+      font-size: 0.9rem;
+    }
+    
+    .left-column h3 {
+      font-size: 0.85rem;
+    }
+    
+    .left-column p {
+      font-size: 0.8rem;
+    }
+    
+    .right-column h2 {
+      font-size: 0.9rem;
+    }
+    
+    .right-column h3 {
+      font-size: 1rem;
+    }
   }
   .right-column h1 + p { /* Contact Info */
     font-size: 0.9rem;
@@ -231,13 +281,13 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
           <p>We couldn't tailor your resume this time. Please try again. In the meantime, here is a sample of a successful result.</p>
         </div>
       )}
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div className="flex gap-2">
-          <button onClick={handleDownloadPdf} disabled={isDownloadingPdf} className="flex items-center gap-2 text-sm bg-slate-100 text-slate-700 font-semibold py-2 px-3 rounded-md hover:bg-slate-200 transition-colors disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-wait">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2 sm:flex-nowrap">
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button onClick={handleDownloadPdf} disabled={isDownloadingPdf} className="flex items-center justify-center gap-2 text-sm bg-slate-100 text-slate-700 font-semibold py-3 px-4 rounded-md hover:bg-slate-200 transition-colors disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-wait flex-1 sm:flex-initial min-h-[44px]">
             {isDownloadingPdf ? <Spinner className="w-4 h-4 text-slate-500"/> : <PdfIcon className="w-4 h-4" />}
             PDF
           </button>
-          <button onClick={handleDownloadDocx} disabled={isDownloadingDocx} className="flex items-center gap-2 text-sm bg-slate-100 text-slate-700 font-semibold py-2 px-3 rounded-md hover:bg-slate-200 transition-colors disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-wait">
+          <button onClick={handleDownloadDocx} disabled={isDownloadingDocx} className="flex items-center justify-center gap-2 text-sm bg-slate-100 text-slate-700 font-semibold py-3 px-4 rounded-md hover:bg-slate-200 transition-colors disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-wait flex-1 sm:flex-initial min-h-[44px]">
             {isDownloadingDocx ? <Spinner className="w-4 h-4 text-slate-500"/> : <WordIcon className="w-4 h-4" />}
             Word
           </button>
@@ -245,7 +295,7 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         <button
           onClick={onGenerateCoverLetter}
           disabled={isCoverLetterLoading || generationFailed}
-          className="flex items-center gap-2 text-sm bg-indigo-100 text-indigo-700 font-semibold py-2 px-3 rounded-md hover:bg-indigo-200 transition-colors disabled:bg-indigo-50 disabled:text-indigo-300"
+          className="flex items-center justify-center gap-2 text-sm bg-indigo-100 text-indigo-700 font-semibold py-3 px-4 rounded-md hover:bg-indigo-200 transition-colors disabled:bg-indigo-50 disabled:text-indigo-300 w-full sm:w-auto min-h-[44px] mt-2 sm:mt-0"
         >
           {isCoverLetterLoading ? (
             <Spinner className="w-4 h-4" />
