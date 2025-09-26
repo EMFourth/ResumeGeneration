@@ -11,6 +11,7 @@ import { generateTailoredResume, generateCoverLetter } from './services/geminiSe
 import { InitialStatePlaceholder } from './components/InitialStatePlaceholder';
 import { sampleResumeHtml } from './components/SampleResume';
 import { GoogleAd } from './components/GoogleAd';
+import { PrivacyNotice } from './components/PrivacyNotice';
 
 const App: React.FC = () => {
   const [resumeText, setResumeText] = useState('');
@@ -144,6 +145,12 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
+      
+      {/* Privacy Notice Footer */}
+      <footer className="max-w-7xl mx-auto px-4 pb-8">
+        <PrivacyNotice />
+      </footer>
+      
       <CoverLetterModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
