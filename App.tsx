@@ -157,6 +157,26 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
+      
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-200 mt-12">
+        <div className="container mx-auto px-4 md:px-8 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-slate-600">
+            <div className="mb-4 md:mb-0">
+              <p>&copy; 2025 Resume Gen. All rights reserved.</p>
+            </div>
+            <div className="flex space-x-6">
+              <a href="/privacy-policy.html" className="hover:text-indigo-600 transition-colors">
+                Privacy Policy
+              </a>
+              <a href="mailto:contact@resume-gen.app" className="hover:text-indigo-600 transition-colors">
+                Contact
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+      
       <CoverLetterModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
