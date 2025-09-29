@@ -85,3 +85,4 @@ npm run preview
 
 - **"An API Key must be set" error:** Make sure your `GEMINI_API_KEY` is properly set in `.env.local` for local development or in Vercel environment variables for production.
 - **Resume not generating:** The app will gracefully fall back to showing a sample resume if the API call fails, allowing you to test the interface even without a valid API key.
+# Force deployment for ads.txt redirect
