@@ -11,7 +11,7 @@ const getAiClient = (): GoogleGenAI => {
   if (!ai) {
     const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
     if (!apiKey) {
-      throw new Error("GEMINI_API_KEY environment variable is not set");
+      throw new Error("API key not configured. Please check your environment variables or contact support.");
     }
     ai = new GoogleGenAI({ apiKey });
   }
@@ -123,7 +123,17 @@ ${jobPosting}
 
   } catch (error) {
     console.error("Error generating tailored resume:", error);
-    throw new Error("Failed to generate resume from AI.");
+    // Provide more specific error messages for production
+    if (error instanceof Error) {
+      if (error.message.includes("API key")) {
+        throw new Error("API configuration error. Please try again or contact support if the issue persists.");
+      } else if (error.message.includes("quota") || error.message.includes("limit")) {
+        throw new Error("Service temporarily unavailable due to high demand. Please try again in a few minutes.");
+      } else if (error.message.includes("network") || error.message.includes("timeout")) {
+        throw new Error("Connection issue. Please check your internet connection and try again.");
+      }
+    }
+    throw new Error("Unable to generate resume at this time. Please try again or contact support if the issue persists.");
   }
 };
 
@@ -152,6 +162,16 @@ ${jobPosting}
     return response.text;
   } catch (error) {
     console.error("Error generating cover letter:", error);
-    throw new Error("Failed to generate cover letter from AI.");
+    // Provide more specific error messages for production
+    if (error instanceof Error) {
+      if (error.message.includes("API key")) {
+        throw new Error("API configuration error. Please try again or contact support if the issue persists.");
+      } else if (error.message.includes("quota") || error.message.includes("limit")) {
+        throw new Error("Service temporarily unavailable due to high demand. Please try again in a few minutes.");
+      } else if (error.message.includes("network") || error.message.includes("timeout")) {
+        throw new Error("Connection issue. Please check your internet connection and try again.");
+      }
+    }
+    throw new Error("Unable to generate cover letter at this time. Please try again or contact support if the issue persists.");
   }
 };
