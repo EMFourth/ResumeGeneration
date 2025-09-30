@@ -220,33 +220,58 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
       const filenameBase = getDynamicFilenameBase(htmlContent);
 
-      // Create a temporary element for rendering
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'fixed';
-      tempDiv.style.left = '-10000px';
-      tempDiv.style.top = '0';
-      tempDiv.style.width = '8.5in';
-      tempDiv.style.height = 'auto';
-      tempDiv.style.backgroundColor = 'white';
-      tempDiv.style.fontFamily = "'Segoe UI', sans-serif";
-      tempDiv.style.zIndex = '-1';
+      // Create iframe for better isolation and styling
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.left = '-10000px';
+      iframe.style.top = '0';
+      iframe.style.width = '8.5in';
+      iframe.style.height = '11in';
+      iframe.style.border = 'none';
+      iframe.style.backgroundColor = 'white';
+      document.body.appendChild(iframe);
 
-      // Create a style element with our CSS
-      const styleElement = document.createElement('style');
-      styleElement.textContent = resumeStyles;
-      tempDiv.appendChild(styleElement);
+      // Wait for iframe to load
+      await new Promise<void>((resolve) => {
+        iframe.onload = () => resolve();
+        
+        const doc = iframe.contentDocument!;
+        doc.open();
+        doc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                ${resumeStyles}
+                body { 
+                  margin: 0; 
+                  padding: 20px;
+                  font-family: 'Segoe UI', sans-serif;
+                  background: white;
+                  width: 8.5in;
+                }
+                .resume-container {
+                  background: white;
+                  width: 100%;
+                  height: auto;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="resume-container">
+                ${htmlContent}
+              </div>
+            </body>
+          </html>
+        `);
+        doc.close();
+      });
 
-      // Create the resume container
-      const resumeDiv = document.createElement('div');
-      resumeDiv.className = 'resume-container';
-      resumeDiv.innerHTML = htmlContent;
-      tempDiv.appendChild(resumeDiv);
+      // Wait for styles and fonts to load
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Add to document for rendering
-      document.body.appendChild(tempDiv);
-
-      // Wait for fonts and styles to load
-      await new Promise(resolve => setTimeout(resolve, 200));
+      const resumeElement = iframe.contentDocument!.body;
 
       try {
         // Method 1: Try html2pdf with better settings
@@ -271,7 +296,7 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
             }
           };
 
-          await (window as any).html2pdf().set(opt).from(resumeDiv).save();
+          await (window as any).html2pdf().set(opt).from(resumeElement).save();
         } else {
           throw new Error('html2pdf not available');
         }
@@ -327,7 +352,7 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
       }
 
       // Clean up
-      document.body.removeChild(tempDiv);
+      document.body.removeChild(iframe);
 
     } catch (error: any) {
       console.error('PDF export failed:', error);
@@ -347,47 +372,30 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
       const filenameBase = getDynamicFilenameBase(htmlContent);
 
+      // Create a clean HTML document for Word conversion
+      const cleanHtml = createCleanHtmlForWord(htmlContent);
+      
       // Try html-to-docx library first
-      if ((window as any).htmlToDocx && typeof (window as any).htmlToDocx.asBlob === 'function') {
-        // Create clean HTML for docx conversion
-        const cleanHtml = `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <style>
-                body { font-family: Calibri, Arial, sans-serif; margin: 1in; }
-                h1 { font-size: 24pt; color: #2d3748; margin-bottom: 0.2in; }
-                h2 { font-size: 14pt; color: #4a90e2; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.1in; margin-top: 0.3in; margin-bottom: 0.2in; text-transform: uppercase; }
-                h3 { font-size: 12pt; font-weight: bold; margin-top: 0.2in; margin-bottom: 0.05in; }
-                p { font-size: 11pt; margin-bottom: 0.1in; line-height: 1.2; }
-                ul { margin: 0; padding-left: 0.3in; }
-                li { margin-bottom: 0.05in; font-size: 11pt; line-height: 1.2; }
-                .contact-info { font-size: 10pt; margin-bottom: 0.3in; }
-                .skills-section { font-size: 10pt; }
-                .education-section { font-size: 10pt; }
-              </style>
-            </head>
-            <body>
-              ${htmlContent.replace(/<table[^>]*>.*?<\/table>/gs, (match) => {
-                // Convert the complex table layout to a simpler structure for Word
-                return match
-                  .replace(/<table[^>]*>/g, '<div>')
-                  .replace(/<\/table>/g, '</div>')
-                  .replace(/<tbody[^>]*>/g, '')
-                  .replace(/<\/tbody>/g, '')
-                  .replace(/<tr[^>]*>/g, '')
-                  .replace(/<\/tr>/g, '')
-                  .replace(/<td class="left-column"[^>]*>/g, '<div class="skills-section">')
-                  .replace(/<td class="right-column"[^>]*>/g, '<div class="main-content">')
-                  .replace(/<\/td>/g, '</div>');
-              })}
-            </body>
-          </html>
-        `;
-        
-        await downloadAsDocx(cleanHtml, `${filenameBase}.docx`);
-        return;
+      if ((window as any).HTMLtoDOCX && typeof (window as any).HTMLtoDOCX === 'function') {
+        try {
+          const docxBlob = (window as any).HTMLtoDOCX(cleanHtml, null, {
+            table: { row: { cantSplit: true } },
+            footer: true,
+            pageNumber: false,
+          });
+          
+          const url = URL.createObjectURL(docxBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${filenameBase}.docx`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          return;
+        } catch (docxError) {
+          console.warn('html-to-docx failed, trying RTF fallback:', docxError);
+        }
       }
 
       // Fallback: Create a simplified RTF document (Rich Text Format)
@@ -409,6 +417,85 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
     } finally {
       setIsDownloadingDocx(false);
     }
+  };
+
+  // Helper function to create clean HTML for Word conversion
+  const createCleanHtmlForWord = (html: string): string => {
+    // Convert table-based layout to div-based for better Word compatibility
+    let cleanHtml = html;
+    
+    // Replace table structure with divs
+    cleanHtml = cleanHtml.replace(/<table[^>]*class="resume-layout"[^>]*>/g, '<div class="resume-layout">');
+    cleanHtml = cleanHtml.replace(/<\/table>/g, '</div>');
+    cleanHtml = cleanHtml.replace(/<tbody[^>]*>/g, '');
+    cleanHtml = cleanHtml.replace(/<\/tbody>/g, '');
+    cleanHtml = cleanHtml.replace(/<tr[^>]*>/g, '');
+    cleanHtml = cleanHtml.replace(/<\/tr>/g, '');
+    cleanHtml = cleanHtml.replace(/<td class="left-column"[^>]*>/g, '<div class="left-section">');
+    cleanHtml = cleanHtml.replace(/<td class="right-column"[^>]*>/g, '<div class="right-section">');
+    cleanHtml = cleanHtml.replace(/<\/td>/g, '</div>');
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { 
+              font-family: Calibri, Arial, sans-serif; 
+              margin: 0.5in; 
+              line-height: 1.15; 
+            }
+            h1 { 
+              font-size: 24pt; 
+              color: #2d3748; 
+              margin-bottom: 0.2in; 
+              font-weight: bold; 
+            }
+            h2 { 
+              font-size: 14pt; 
+              color: #4a90e2; 
+              margin-top: 0.3in; 
+              margin-bottom: 0.15in; 
+              text-transform: uppercase; 
+              font-weight: bold;
+            }
+            h3 { 
+              font-size: 12pt; 
+              font-weight: bold; 
+              margin-top: 0.2in; 
+              margin-bottom: 0.05in; 
+            }
+            p { 
+              font-size: 11pt; 
+              margin-bottom: 0.1in; 
+              line-height: 1.2; 
+            }
+            ul { 
+              margin: 0.1in 0; 
+              padding-left: 0.3in; 
+            }
+            li { 
+              margin-bottom: 0.05in; 
+              font-size: 11pt; 
+              line-height: 1.2; 
+            }
+            .left-section {
+              margin-bottom: 0.3in;
+              padding: 0.2in;
+              background-color: #f8f9fa;
+            }
+            .right-section {
+              margin-bottom: 0.2in;
+            }
+            strong { font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          ${cleanHtml}
+        </body>
+      </html>
+    `;
   };
 
   // Helper function to convert HTML to RTF
