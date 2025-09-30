@@ -11,7 +11,7 @@ import { generateTailoredResume, generateCoverLetter } from './services/geminiSe
 import { InitialStatePlaceholder } from './components/InitialStatePlaceholder';
 import { sampleResumeHtml } from './components/SampleResume';
 import { GoogleAd } from './components/GoogleAd';
-import { AdsterraSquare, AdsterraBanner } from './components/AdsterraAd';
+import { AdsterraSquare } from './components/AdsterraAd';
 
 const App: React.FC = () => {
   const [resumeText, setResumeText] = useState('');
@@ -107,7 +107,6 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
       <Header />
-      <AdsterraBanner className="my-4" />
       <main className="container mx-auto p-4 md:p-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Section */}
