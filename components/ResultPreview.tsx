@@ -250,7 +250,7 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
       try {
         // Method 1: Try html2pdf with better settings
-        if (typeof html2pdf !== 'undefined') {
+        if (typeof (window as any).html2pdf !== 'undefined') {
           const opt = {
             margin: [10, 10, 10, 10], // Small margins in pt
             filename: `${filenameBase}.pdf`,
@@ -271,7 +271,7 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
             }
           };
 
-          await html2pdf().set(opt).from(resumeDiv).save();
+          await (window as any).html2pdf().set(opt).from(resumeDiv).save();
         } else {
           throw new Error('html2pdf not available');
         }
