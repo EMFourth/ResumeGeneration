@@ -170,30 +170,29 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
+    
     try {
+      console.log("PDF button clicked!");
+      
       if (!htmlContent || htmlContent.trim() === "") {
         alert("No resume content to export. Please generate your resume first.");
         return;
       }
       
-      console.log("=== PDF DEBUG ===");
-      console.log("htmlContent exists:", !!htmlContent);
-      console.log("htmlContent length:", htmlContent.length);
-      console.log("htmlContent sample:", htmlContent.substring(0, 100));
-      
-      // Test if html2pdf exists
-      if (typeof html2pdf === 'undefined') {
-        throw new Error("html2pdf library not loaded");
-      }
-      
-      // Create complete HTML document
-      const completeHtml = `
+      // Create a blob with the HTML content
+      const htmlForPdf = `
         <!DOCTYPE html>
         <html>
         <head>
           <meta charset="utf-8">
+          <title>Resume</title>
           <style>
-            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: Arial, sans-serif; 
+              background: white;
+              padding: 0.5in;
+            }
             ${resumeStyles}
           </style>
         </head>
@@ -203,75 +202,46 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         </html>
       `;
       
-      console.log("Complete HTML length:", completeHtml.length);
+      // Method 1: Try html2pdf if available
+      if (typeof html2pdf !== 'undefined') {
+        console.log("Using html2pdf...");
+        const element = document.createElement('div');
+        element.innerHTML = htmlForPdf;
+        element.style.position = 'absolute';
+        element.style.left = '-9999px';
+        element.style.width = '8.5in';
+        document.body.appendChild(element);
+        
+        await html2pdf().set({
+          margin: 0.5,
+          filename: 'resume.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        }).from(element).save();
+        
+        document.body.removeChild(element);
+        console.log("PDF downloaded via html2pdf!");
+        return;
+      }
       
-      // Create temporary element
-      const element = document.createElement('div');
-      element.innerHTML = completeHtml;
-      element.style.position = 'absolute';
-      element.style.left = '-10000px';
-      element.style.width = '8.5in';
-      element.style.backgroundColor = 'white';
-      
-      document.body.appendChild(element);
-      
-      const opt = {
-        margin: 0.3,
-        filename: 'resume.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-      
-      console.log("Calling html2pdf...");
-      
-      // Try html2pdf
-      await html2pdf().set(opt).from(element).save();
-      
-      document.body.removeChild(element);
-      console.log("SUCCESS: PDF generated!");
+      // Method 2: Browser print fallback
+      console.log("Using browser print...");
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      if (printWindow) {
+        printWindow.document.write(htmlForPdf);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+        }, 250);
+      } else {
+        alert("Please allow popups to download PDF");
+      }
       
     } catch (error) {
-      console.error("PDF generation failed:", error);
-      
-      // FALLBACK: Use browser print as PDF
-      try {
-        console.log("FALLBACK: Opening print dialog...");
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-          printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <title>Resume</title>
-              <style>
-                body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-                ${resumeStyles}
-                @media print {
-                  body { margin: 0; }
-                  .resume-container { page-break-inside: avoid; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="resume-container">${htmlContent}</div>
-              <script>
-                window.onload = function() {
-                  window.print();
-                  setTimeout(() => window.close(), 1000);
-                }
-              </script>
-            </body>
-            </html>
-          `);
-          printWindow.document.close();
-        } else {
-          alert("Please allow popups and try again, or use Ctrl+P to print manually.");
-        }
-      } catch (fallbackError) {
-        console.error("Fallback failed:", fallbackError);
-        alert("PDF generation failed. Please try again or use your browser's print function (Ctrl+P).");
-      }
+      console.error("PDF error:", error);
+      alert("PDF download failed: " + error.message);
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -279,14 +249,61 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
   const handleDownloadDocx = async () => {
     setIsDownloadingDocx(true);
+    
     try {
-      const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${resumeStyles}</style></head><body><div class="resume-container">${htmlContent}</div></body></html>`;
-      await downloadAsDocx(fullHtml, 'resume.docx');
+      console.log("DOCX button clicked!");
+      
+      if (!htmlContent || htmlContent.trim() === "") {
+        alert("No resume content to export. Please generate your resume first.");
+        return;
+      }
+      
+      // Method 1: Try the existing downloadAsDocx function
+      try {
+        const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${resumeStyles}</style></head><body><div class="resume-container">${htmlContent}</div></body></html>`;
+        await downloadAsDocx(fullHtml, 'resume.docx');
+        console.log("DOCX downloaded via downloadAsDocx!");
+        return;
+      } catch (docxError) {
+        console.log("downloadAsDocx failed, trying fallback...", docxError);
+      }
+      
+      // Method 2: Simple HTML download as fallback
+      const htmlContent_full = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Resume</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 1in; }
+            ${resumeStyles}
+          </style>
+        </head>
+        <body>
+          <div class="resume-container">${htmlContent}</div>
+        </body>
+        </html>
+      `;
+      
+      const blob = new Blob([htmlContent_full], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'resume.html';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log("Downloaded as HTML file (can be opened in Word)");
+      alert("Downloaded as HTML file - you can open this in Microsoft Word to convert to DOCX format.");
+      
     } catch (error) {
-        console.error("Failed to download DOCX:", error);
-        alert("There was an error generating the Word document. Please try again.");
+      console.error("DOCX error:", error);
+      alert("Document download failed: " + error.message);
     } finally {
-        setIsDownloadingDocx(false);
+      setIsDownloadingDocx(false);
     }
   };
 
