@@ -220,87 +220,99 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
       const filenameBase = getDynamicFilenameBase(htmlContent);
 
-      if (typeof html2pdf === 'undefined') {
-        throw new Error('html2pdf library not loaded');
-      }
+      // Create a temporary element for rendering
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.left = '-10000px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '8.5in';
+      tempDiv.style.height = 'auto';
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.fontFamily = "'Segoe UI', sans-serif";
+      tempDiv.style.zIndex = '-1';
 
-      // Create a complete HTML document with inline styles
-      const completeHtml = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="UTF-8">
-            <style>
-              ${resumeStyles}
-              @page { 
-                size: letter; 
-                margin: 0; 
-              }
-              body { 
-                margin: 0; 
-                padding: 0;
-                width: 8.5in;
-                font-family: 'Segoe UI', sans-serif;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="resume-container">
-              ${htmlContent}
-            </div>
-          </body>
-        </html>
-      `;
+      // Create a style element with our CSS
+      const styleElement = document.createElement('style');
+      styleElement.textContent = resumeStyles;
+      tempDiv.appendChild(styleElement);
 
-      // Create a temporary iframe to render the content
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.left = '-10000px';
-      iframe.style.top = '0';
-      iframe.style.width = '816px'; // 8.5in at 96dpi
-      iframe.style.height = '1056px'; // 11in at 96dpi
-      iframe.style.border = 'none';
-      document.body.appendChild(iframe);
+      // Create the resume container
+      const resumeDiv = document.createElement('div');
+      resumeDiv.className = 'resume-container';
+      resumeDiv.innerHTML = htmlContent;
+      tempDiv.appendChild(resumeDiv);
 
-      // Wait for iframe to be ready
-      await new Promise<void>((resolve) => {
-        iframe.onload = () => resolve();
-        iframe.srcdoc = completeHtml;
-      });
+      // Add to document for rendering
+      document.body.appendChild(tempDiv);
 
-      // Give it a moment to render
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for fonts and styles to load
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      const opt = {
-        margin: 0,
-        filename: `${filenameBase}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: {
-          scale: 1.5,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          width: 816,
-          height: 1056
-        },
-        jsPDF: { 
-          unit: 'pt', 
-          format: 'letter', 
-          orientation: 'portrait' 
-        }
-      };
-
-      // Generate PDF from the iframe document
-      await html2pdf().set(opt).from(iframe.contentDocument!.body).save();
-
-      // Clean up
-      document.body.removeChild(iframe);
-
-    } catch (error: any) {
-      console.error('PDF generation failed:', error);
-      // Last-resort fallback: download as HTML which can be printed to PDF
       try {
-        const filenameBase = getDynamicFilenameBase(htmlContent);
-        const htmlDownload = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${resumeStyles}</style></head><body><div class="resume-container">${htmlContent}</div></body></html>`;
+        // Method 1: Try html2pdf with better settings
+        if (typeof html2pdf !== 'undefined') {
+          const opt = {
+            margin: [10, 10, 10, 10], // Small margins in pt
+            filename: `${filenameBase}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: '#ffffff',
+              logging: false,
+              letterRendering: true
+            },
+            jsPDF: { 
+              unit: 'pt', 
+              format: 'letter', 
+              orientation: 'portrait',
+              compress: false
+            }
+          };
+
+          await html2pdf().set(opt).from(resumeDiv).save();
+        } else {
+          throw new Error('html2pdf not available');
+        }
+      } catch (pdfError) {
+        console.warn('html2pdf failed, trying HTML download:', pdfError);
+        
+        // Fallback: Create a standalone HTML file
+        const htmlDownload = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Resume - ${filenameBase}</title>
+  <style>
+    ${resumeStyles}
+    @page { 
+      size: letter; 
+      margin: 0.5in; 
+    }
+    @media print {
+      body { margin: 0; }
+      .resume-container { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="resume-container">
+    ${htmlContent}
+  </div>
+  <script>
+    // Auto-print on load (user can cancel)
+    window.onload = function() {
+      setTimeout(function() {
+        if (confirm('Would you like to print this resume to PDF now?')) {
+          window.print();
+        }
+      }, 500);
+    };
+  </script>
+</body>
+</html>`;
+
         const blob = new Blob([htmlDownload], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -310,11 +322,16 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        alert('PDF generator failed. Downloaded HTML that you can open and print to PDF.');
-      } catch (fallbackErr) {
-        console.error('HTML fallback failed:', fallbackErr);
-        alert('Unable to generate PDF. Please try again.');
+        
+        alert('PDF generation failed. Downloaded HTML file - open it and use "Print > Save as PDF" in your browser.');
       }
+
+      // Clean up
+      document.body.removeChild(tempDiv);
+
+    } catch (error: any) {
+      console.error('PDF export failed:', error);
+      alert('PDF download failed. Please try again.');
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -400,43 +417,99 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
     const temp = document.createElement('div');
     temp.innerHTML = html;
     
-    // Extract text content with basic formatting
+    // Start RTF document
     let rtfContent = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}{\\f1 Arial;}}\\f0\\fs24 ';
     
-    // Find the name (h1)
-    const h1 = temp.querySelector('h1');
-    if (h1) {
-      rtfContent += `\\b\\fs36 ${h1.textContent?.trim() || ''}\\b0\\fs24\\par\\par `;
-    }
-    
-    // Find contact info
-    const contactP = temp.querySelector('h1 + p');
-    if (contactP) {
-      rtfContent += `${contactP.textContent?.trim() || ''}\\par\\par `;
-    }
-    
-    // Process sections
-    const sections = temp.querySelectorAll('h2');
-    sections.forEach(section => {
-      rtfContent += `\\b\\fs28 ${section.textContent?.trim() || ''}\\b0\\fs24\\par `;
+    // Recursive function to process all elements
+    const processElement = (element: Element): void => {
+      const tagName = element.tagName?.toLowerCase();
+      const text = element.textContent?.trim() || '';
       
-      let nextElement = section.nextElementSibling;
-      while (nextElement && nextElement.tagName !== 'H2') {
-        if (nextElement.tagName === 'H3') {
-          rtfContent += `\\b ${nextElement.textContent?.trim() || ''}\\b0\\par `;
-        } else if (nextElement.tagName === 'P') {
-          rtfContent += `${nextElement.textContent?.trim() || ''}\\par `;
-        } else if (nextElement.tagName === 'UL') {
-          const items = nextElement.querySelectorAll('li');
-          items.forEach(item => {
-            rtfContent += `\\bullet ${item.textContent?.trim() || ''}\\par `;
-          });
-        }
-        nextElement = nextElement.nextElementSibling;
+      if (!text && !['table', 'tbody', 'tr', 'td'].includes(tagName)) {
+        return; // Skip empty elements except table elements
       }
-      rtfContent += '\\par ';
-    });
+      
+      switch (tagName) {
+        case 'h1':
+          rtfContent += `\\b\\fs36 ${text}\\b0\\fs24\\par\\par `;
+          break;
+          
+        case 'h2':
+          rtfContent += `\\b\\fs28 ${text}\\b0\\fs24\\par `;
+          break;
+          
+        case 'h3':
+          rtfContent += `\\b\\fs24 ${text}\\b0\\fs24\\par `;
+          break;
+          
+        case 'p':
+          if (text) {
+            rtfContent += `${text}\\par `;
+          }
+          break;
+          
+        case 'ul':
+        case 'ol':
+          // Process list items
+          const items = element.querySelectorAll('li');
+          items.forEach(item => {
+            const itemText = item.textContent?.trim() || '';
+            if (itemText) {
+              rtfContent += `\\bullet ${itemText}\\par `;
+            }
+          });
+          break;
+          
+        case 'li':
+          // Handled by ul/ol case above
+          break;
+          
+        case 'strong':
+        case 'b':
+          rtfContent += `\\b${text}\\b0 `;
+          break;
+          
+        case 'em':
+        case 'i':
+          rtfContent += `\\i${text}\\i0 `;
+          break;
+          
+        case 'table':
+        case 'tbody':
+          // Process table contents recursively
+          Array.from(element.children).forEach(child => processElement(child));
+          break;
+          
+        case 'tr':
+          // Process table row
+          Array.from(element.children).forEach(child => processElement(child));
+          rtfContent += '\\par ';
+          break;
+          
+        case 'td':
+          // Process table cell contents
+          if (element.children.length > 0) {
+            Array.from(element.children).forEach(child => processElement(child));
+          } else if (text) {
+            rtfContent += `${text} `;
+          }
+          break;
+          
+        default:
+          // For other elements, process children recursively
+          if (element.children.length > 0) {
+            Array.from(element.children).forEach(child => processElement(child));
+          } else if (text && !['script', 'style'].includes(tagName)) {
+            rtfContent += `${text} `;
+          }
+          break;
+      }
+    };
     
+    // Process all elements in the HTML
+    Array.from(temp.children).forEach(child => processElement(child));
+    
+    // Close RTF document
     rtfContent += '}';
     return rtfContent;
   };
