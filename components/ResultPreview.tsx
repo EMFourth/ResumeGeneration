@@ -171,18 +171,14 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     try {
-      const fullHtmlForPdf = `
-        <style>${resumeStyles}</style>
-        <div class="resume-container">${htmlContent}</div>
-      `;
-
+      if (!htmlContent || htmlContent.trim() === "") {
+        alert("No resume content to export. Please generate your resume first.");
+        return;
+      }
+      // Use the same HTML as the preview iframe
+      const fullHtmlForPdf = `<style>${resumeStyles}</style><div class='resume-container'>${htmlContent}</div>`;
       const element = document.createElement('div');
-      // This wrapper is crucial for html2pdf to correctly measure the A4-sized element.
-      const wrapper = document.createElement('div');
-      wrapper.style.width = '8.5in'; 
-      wrapper.appendChild(element);
       element.innerHTML = fullHtmlForPdf;
-      
       const opt = {
         margin:       0,
         filename:     'resume.pdf',
@@ -190,9 +186,7 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
-
       await html2pdf().set(opt).from(element).save();
-
     } catch (error) {
       console.error("Failed to download PDF:", error);
       alert("There was an error generating the PDF. Please try again.");
