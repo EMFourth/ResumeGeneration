@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { ResumeInput } from './components/ResumeInput';
@@ -116,8 +115,9 @@ const App: React.FC = () => {
             <ResumeInput onParsed={handleResumeParsed} onFileChange={setResumeFileName} />
             <JobDescriptionInput value={jobDescription} onChange={setJobDescription} />
             {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
-            <GoogleAd />
-            <AdsterraSquare className="my-4" />
+            {/* Removed unnecessary blank box */}
+            {/* <GoogleAd /> */}
+            {/* <AdsterraSquare className="my-4" /> */}
             <button
               onClick={handleGenerateResume}
               disabled={isLoadingResume || !resumeText || !jobDescription}
