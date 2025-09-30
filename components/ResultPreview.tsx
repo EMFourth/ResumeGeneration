@@ -225,19 +225,19 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         return;
       }
       
-      // Method 2: Browser print fallback
-      console.log("Using browser print...");
-      const printWindow = window.open('', '_blank', 'width=800,height=600');
-      if (printWindow) {
-        printWindow.document.write(htmlForPdf);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-        }, 250);
-      } else {
-        alert("Please allow popups to download PDF");
-      }
+      // Method 2: Safe blob download fallback
+      console.log("Using safe blob download...");
+      const blob = new Blob([htmlForPdf], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'resume.html';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      alert("Downloaded as HTML file - open in browser and use Ctrl+P to save as PDF");
       
     } catch (error) {
       console.error("PDF error:", error);
