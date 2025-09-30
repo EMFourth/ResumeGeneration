@@ -176,52 +176,102 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         return;
       }
       
-      console.log("PDF generation: Finding preview iframe...");
+      console.log("=== PDF DEBUG ===");
+      console.log("htmlContent exists:", !!htmlContent);
+      console.log("htmlContent length:", htmlContent.length);
+      console.log("htmlContent sample:", htmlContent.substring(0, 100));
       
-      // Find the preview iframe that's actually working
-      const iframe = document.querySelector('iframe[title="Resume Preview"]') as HTMLIFrameElement;
-      if (!iframe || !iframe.contentDocument) {
-        throw new Error("Could not find preview iframe or access its content");
+      // Test if html2pdf exists
+      if (typeof html2pdf === 'undefined') {
+        throw new Error("html2pdf library not loaded");
       }
       
-      console.log("Found iframe, accessing content...");
+      // Create complete HTML document
+      const completeHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+            ${resumeStyles}
+          </style>
+        </head>
+        <body>
+          <div class="resume-container">${htmlContent}</div>
+        </body>
+        </html>
+      `;
       
-      // Get the iframe's document body (which contains the rendered resume)
-      const iframeBody = iframe.contentDocument.body;
-      if (!iframeBody) {
-        throw new Error("Could not access iframe body content");
-      }
+      console.log("Complete HTML length:", completeHtml.length);
       
-      console.log("Iframe body content found, generating PDF...");
+      // Create temporary element
+      const element = document.createElement('div');
+      element.innerHTML = completeHtml;
+      element.style.position = 'absolute';
+      element.style.left = '-10000px';
+      element.style.width = '8.5in';
+      element.style.backgroundColor = 'white';
+      
+      document.body.appendChild(element);
       
       const opt = {
-        margin: [0.2, 0.2, 0.2, 0.2],
+        margin: 0.3,
         filename: 'resume.pdf',
-        image: { 
-          type: 'jpeg', 
-          quality: 0.98 
-        },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-          unit: 'in', 
-          format: 'letter', 
-          orientation: 'portrait'
-        }
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
       
-      // Generate PDF directly from the working iframe content
-      await html2pdf().set(opt).from(iframeBody).save();
+      console.log("Calling html2pdf...");
       
-      console.log("PDF generated successfully from iframe!");
+      // Try html2pdf
+      await html2pdf().set(opt).from(element).save();
+      
+      document.body.removeChild(element);
+      console.log("SUCCESS: PDF generated!");
       
     } catch (error) {
       console.error("PDF generation failed:", error);
-      alert(`PDF generation failed: ${error.message}. The preview iframe may not be ready.`);
+      
+      // FALLBACK: Use browser print as PDF
+      try {
+        console.log("FALLBACK: Opening print dialog...");
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Resume</title>
+              <style>
+                body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                ${resumeStyles}
+                @media print {
+                  body { margin: 0; }
+                  .resume-container { page-break-inside: avoid; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="resume-container">${htmlContent}</div>
+              <script>
+                window.onload = function() {
+                  window.print();
+                  setTimeout(() => window.close(), 1000);
+                }
+              </script>
+            </body>
+            </html>
+          `);
+          printWindow.document.close();
+        } else {
+          alert("Please allow popups and try again, or use Ctrl+P to print manually.");
+        }
+      } catch (fallbackError) {
+        console.error("Fallback failed:", fallbackError);
+        alert("PDF generation failed. Please try again or use your browser's print function (Ctrl+P).");
+      }
     } finally {
       setIsDownloadingPdf(false);
     }
