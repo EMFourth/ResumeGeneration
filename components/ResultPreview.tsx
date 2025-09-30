@@ -176,98 +176,78 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         return;
       }
       
-      // Try to get the iframe and capture its content directly
-      const iframe = document.querySelector('iframe[title="Resume Preview"]') as HTMLIFrameElement;
-      let elementToCapture;
+      console.log("Starting PDF generation...");
+      console.log("HTML content length:", htmlContent.length);
+      console.log("First 100 chars:", htmlContent.substring(0, 100));
       
-      if (iframe && iframe.contentDocument) {
-        // If we can access the iframe content, use it directly
-        console.log("Using iframe content for PDF");
-        elementToCapture = iframe.contentDocument.body;
-        
-        // Ensure the iframe body has proper dimensions
-        if (elementToCapture) {
-          elementToCapture.style.width = '8.5in';
-          elementToCapture.style.height = '11in';
-          elementToCapture.style.margin = '0';
-          elementToCapture.style.padding = '0';
-          elementToCapture.style.backgroundColor = 'white';
-        }
-      } else {
-        // Fallback: create our own element
-        console.log("Creating fallback element for PDF");
-        const tempDiv = document.createElement('div');
-        tempDiv.style.position = 'absolute';
-        tempDiv.style.left = '-9999px';
-        tempDiv.style.top = '-9999px';
-        tempDiv.style.width = '8.5in';
-        tempDiv.style.height = '11in';
-        tempDiv.style.backgroundColor = 'white';
-        tempDiv.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
-        tempDiv.style.fontSize = '14px';
-        tempDiv.style.lineHeight = '1.4';
-        tempDiv.style.color = '#000';
-        
-        // Inject styles and content
-        tempDiv.innerHTML = `
-          <style>
-            ${resumeStyles}
-            body, html {
-              margin: 0;
-              padding: 0;
-              width: 8.5in;
-              height: 11in;
-              background: white;
-            }
-          </style>
-          <div class="resume-container">${htmlContent}</div>
-        `;
-        
-        document.body.appendChild(tempDiv);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait longer
-        elementToCapture = tempDiv;
-      }
+      // Create a temporary container that matches the preview exactly
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '8.5in';
+      tempContainer.style.height = 'auto';
+      tempContainer.style.backgroundColor = 'white';
+      tempContainer.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      tempContainer.style.zIndex = '-1000';
       
-      if (!elementToCapture) {
-        throw new Error("Could not create element to capture for PDF");
-      }
+      // Create style element for the temp container
+      const styleElement = document.createElement('style');
+      styleElement.textContent = resumeStyles;
+      
+      // Create the resume container
+      const resumeContainer = document.createElement('div');
+      resumeContainer.className = 'resume-container';
+      resumeContainer.innerHTML = htmlContent;
+      
+      // Assemble the structure
+      tempContainer.appendChild(styleElement);
+      tempContainer.appendChild(resumeContainer);
+      document.body.appendChild(tempContainer);
+      
+      // Force a reflow to ensure all styles are applied
+      tempContainer.offsetHeight;
+      
+      // Wait for rendering
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      console.log("Container prepared, generating PDF...");
+      console.log("Container HTML length:", tempContainer.innerHTML.length);
       
       const opt = {
-        margin: 0,
+        margin: [0.3, 0.3, 0.3, 0.3],
         filename: 'resume.pdf',
         image: { 
           type: 'jpeg', 
-          quality: 1.0 
+          quality: 0.95 
         },
         html2canvas: { 
-          scale: 3,
+          scale: 1.5,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: true,
-          letterRendering: true,
-          width: 816,  // 8.5in at 96 DPI
-          height: 1056 // 11in at 96 DPI
+          letterRendering: true
         },
         jsPDF: { 
           unit: 'in', 
           format: 'letter', 
-          orientation: 'portrait',
-          compress: true
+          orientation: 'portrait'
         }
       };
       
-      console.log("Generating PDF with element:", elementToCapture);
-      await html2pdf().set(opt).from(elementToCapture).save();
+      // Generate PDF
+      await html2pdf().set(opt).from(resumeContainer).save();
       
-      // Clean up fallback element if we created one
-      if (!iframe || !iframe.contentDocument) {
-        document.body.removeChild(elementToCapture as HTMLElement);
-      }
+      // Cleanup
+      document.body.removeChild(tempContainer);
+      
+      console.log("PDF generated successfully!");
       
     } catch (error) {
-      console.error("Failed to download PDF:", error);
-      alert(`PDF generation failed: ${error.message}. Please try again.`);
+      console.error("PDF generation failed:", error);
+      console.error("Error details:", error.stack);
+      alert(`PDF generation failed: ${error.message || 'Unknown error'}. Check console for details.`);
     } finally {
       setIsDownloadingPdf(false);
     }
