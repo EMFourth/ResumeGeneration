@@ -176,58 +176,36 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         return;
       }
       
-      console.log("Starting PDF generation...");
-      console.log("HTML content length:", htmlContent.length);
-      console.log("First 100 chars:", htmlContent.substring(0, 100));
+      console.log("PDF generation: Finding preview iframe...");
       
-      // Create a temporary container that matches the preview exactly
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'fixed';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '8.5in';
-      tempContainer.style.height = 'auto';
-      tempContainer.style.backgroundColor = 'white';
-      tempContainer.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      tempContainer.style.zIndex = '-1000';
+      // Find the preview iframe that's actually working
+      const iframe = document.querySelector('iframe[title="Resume Preview"]') as HTMLIFrameElement;
+      if (!iframe || !iframe.contentDocument) {
+        throw new Error("Could not find preview iframe or access its content");
+      }
       
-      // Create style element for the temp container
-      const styleElement = document.createElement('style');
-      styleElement.textContent = resumeStyles;
+      console.log("Found iframe, accessing content...");
       
-      // Create the resume container
-      const resumeContainer = document.createElement('div');
-      resumeContainer.className = 'resume-container';
-      resumeContainer.innerHTML = htmlContent;
+      // Get the iframe's document body (which contains the rendered resume)
+      const iframeBody = iframe.contentDocument.body;
+      if (!iframeBody) {
+        throw new Error("Could not access iframe body content");
+      }
       
-      // Assemble the structure
-      tempContainer.appendChild(styleElement);
-      tempContainer.appendChild(resumeContainer);
-      document.body.appendChild(tempContainer);
-      
-      // Force a reflow to ensure all styles are applied
-      tempContainer.offsetHeight;
-      
-      // Wait for rendering
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      console.log("Container prepared, generating PDF...");
-      console.log("Container HTML length:", tempContainer.innerHTML.length);
+      console.log("Iframe body content found, generating PDF...");
       
       const opt = {
-        margin: [0.3, 0.3, 0.3, 0.3],
+        margin: [0.2, 0.2, 0.2, 0.2],
         filename: 'resume.pdf',
         image: { 
           type: 'jpeg', 
-          quality: 0.95 
+          quality: 0.98 
         },
         html2canvas: { 
-          scale: 1.5,
+          scale: 2,
           useCORS: true,
           allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: true,
-          letterRendering: true
+          backgroundColor: '#ffffff'
         },
         jsPDF: { 
           unit: 'in', 
@@ -236,18 +214,14 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         }
       };
       
-      // Generate PDF
-      await html2pdf().set(opt).from(resumeContainer).save();
+      // Generate PDF directly from the working iframe content
+      await html2pdf().set(opt).from(iframeBody).save();
       
-      // Cleanup
-      document.body.removeChild(tempContainer);
-      
-      console.log("PDF generated successfully!");
+      console.log("PDF generated successfully from iframe!");
       
     } catch (error) {
       console.error("PDF generation failed:", error);
-      console.error("Error details:", error.stack);
-      alert(`PDF generation failed: ${error.message || 'Unknown error'}. Check console for details.`);
+      alert(`PDF generation failed: ${error.message}. The preview iframe may not be ready.`);
     } finally {
       setIsDownloadingPdf(false);
     }
