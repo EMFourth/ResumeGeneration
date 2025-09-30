@@ -175,10 +175,25 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         alert("No resume content to export. Please generate your resume first.");
         return;
       }
-      // Use the same HTML as the preview iframe
-      const fullHtmlForPdf = `<style>${resumeStyles}</style><div class='resume-container'>${htmlContent}</div>`;
-      const element = document.createElement('div');
-      element.innerHTML = fullHtmlForPdf;
+      
+      // Create a temporary div and add it to the DOM so it renders properly
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '8.5in';
+      tempDiv.style.height = '11in';
+      tempDiv.style.backgroundColor = 'white';
+      
+      // Use the exact same HTML content as the preview iframe
+      tempDiv.innerHTML = fullHtmlForPreview;
+      
+      // Add to DOM so styles are applied
+      document.body.appendChild(tempDiv);
+      
+      // Wait a moment for styles to be applied
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const opt = {
         margin:       0,
         filename:     'resume.pdf',
@@ -186,7 +201,12 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
-      await html2pdf().set(opt).from(element).save();
+      
+      await html2pdf().set(opt).from(tempDiv).save();
+      
+      // Clean up
+      document.body.removeChild(tempDiv);
+      
     } catch (error) {
       console.error("Failed to download PDF:", error);
       alert("There was an error generating the PDF. Please try again.");
