@@ -329,31 +329,116 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
       }
 
       const filenameBase = getDynamicFilenameBase(htmlContent);
-      const fullHtml = `<!doctype html><html><head><meta charset=\"UTF-8\"><style>${resumeStyles}</style></head><body><div class=\"resume-container\">${htmlContent}</div></body></html>`;
 
-      // Preferred: html-to-docx library
+      // Try html-to-docx library first
       if ((window as any).htmlToDocx && typeof (window as any).htmlToDocx.asBlob === 'function') {
-        await downloadAsDocx(fullHtml, `${filenameBase}.docx`);
+        // Create clean HTML for docx conversion
+        const cleanHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                body { font-family: Calibri, Arial, sans-serif; margin: 1in; }
+                h1 { font-size: 24pt; color: #2d3748; margin-bottom: 0.2in; }
+                h2 { font-size: 14pt; color: #4a90e2; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.1in; margin-top: 0.3in; margin-bottom: 0.2in; text-transform: uppercase; }
+                h3 { font-size: 12pt; font-weight: bold; margin-top: 0.2in; margin-bottom: 0.05in; }
+                p { font-size: 11pt; margin-bottom: 0.1in; line-height: 1.2; }
+                ul { margin: 0; padding-left: 0.3in; }
+                li { margin-bottom: 0.05in; font-size: 11pt; line-height: 1.2; }
+                .contact-info { font-size: 10pt; margin-bottom: 0.3in; }
+                .skills-section { font-size: 10pt; }
+                .education-section { font-size: 10pt; }
+              </style>
+            </head>
+            <body>
+              ${htmlContent.replace(/<table[^>]*>.*?<\/table>/gs, (match) => {
+                // Convert the complex table layout to a simpler structure for Word
+                return match
+                  .replace(/<table[^>]*>/g, '<div>')
+                  .replace(/<\/table>/g, '</div>')
+                  .replace(/<tbody[^>]*>/g, '')
+                  .replace(/<\/tbody>/g, '')
+                  .replace(/<tr[^>]*>/g, '')
+                  .replace(/<\/tr>/g, '')
+                  .replace(/<td class="left-column"[^>]*>/g, '<div class="skills-section">')
+                  .replace(/<td class="right-column"[^>]*>/g, '<div class="main-content">')
+                  .replace(/<\/td>/g, '</div>');
+              })}
+            </body>
+          </html>
+        `;
+        
+        await downloadAsDocx(cleanHtml, `${filenameBase}.docx`);
         return;
       }
 
-      // Fallback 1: Serve as .doc (Word-compatible HTML)
-      const docBlob = new Blob([fullHtml], { type: 'application/msword' });
-      const docUrl = URL.createObjectURL(docBlob);
+      // Fallback: Create a simplified RTF document (Rich Text Format)
+      // RTF is better supported by Word than raw HTML
+      const rtfContent = convertHtmlToRtf(htmlContent);
+      const rtfBlob = new Blob([rtfContent], { type: 'application/rtf' });
+      const rtfUrl = URL.createObjectURL(rtfBlob);
       const a = document.createElement('a');
-      a.href = docUrl;
-      a.download = `${filenameBase}.doc`;
+      a.href = rtfUrl;
+      a.download = `${filenameBase}.rtf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(docUrl);
-      alert('Downloaded as .doc (Word-compatible). You can open and Save As DOCX in Word.');
+      URL.revokeObjectURL(rtfUrl);
+      alert('Downloaded as RTF format. You can open in Word and save as DOCX.');
     } catch (error: any) {
       console.error('DOCX export failed:', error);
       alert('Document download failed. Please try again.');
     } finally {
       setIsDownloadingDocx(false);
     }
+  };
+
+  // Helper function to convert HTML to RTF
+  const convertHtmlToRtf = (html: string): string => {
+    // Create a temporary element to parse the HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    // Extract text content with basic formatting
+    let rtfContent = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}{\\f1 Arial;}}\\f0\\fs24 ';
+    
+    // Find the name (h1)
+    const h1 = temp.querySelector('h1');
+    if (h1) {
+      rtfContent += `\\b\\fs36 ${h1.textContent?.trim() || ''}\\b0\\fs24\\par\\par `;
+    }
+    
+    // Find contact info
+    const contactP = temp.querySelector('h1 + p');
+    if (contactP) {
+      rtfContent += `${contactP.textContent?.trim() || ''}\\par\\par `;
+    }
+    
+    // Process sections
+    const sections = temp.querySelectorAll('h2');
+    sections.forEach(section => {
+      rtfContent += `\\b\\fs28 ${section.textContent?.trim() || ''}\\b0\\fs24\\par `;
+      
+      let nextElement = section.nextElementSibling;
+      while (nextElement && nextElement.tagName !== 'H2') {
+        if (nextElement.tagName === 'H3') {
+          rtfContent += `\\b ${nextElement.textContent?.trim() || ''}\\b0\\par `;
+        } else if (nextElement.tagName === 'P') {
+          rtfContent += `${nextElement.textContent?.trim() || ''}\\par `;
+        } else if (nextElement.tagName === 'UL') {
+          const items = nextElement.querySelectorAll('li');
+          items.forEach(item => {
+            rtfContent += `\\bullet ${item.textContent?.trim() || ''}\\par `;
+          });
+        }
+        nextElement = nextElement.nextElementSibling;
+      }
+      rtfContent += '\\par ';
+    });
+    
+    rtfContent += '}';
+    return rtfContent;
   };
 
   return (
