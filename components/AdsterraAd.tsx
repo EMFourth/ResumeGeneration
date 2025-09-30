@@ -1,182 +1,88 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface AdsterraAdProps {
   className?: string;
 }
 
-declare global {
-  interface Window {
-    atOptions?: any;
-  }
-}
-
-// Main Adsterra Ad component using your actual ad code (container-based)
+// Main Adsterra Ad component - Container Ad (300x250)
 export const AdsterraAd: React.FC<AdsterraAdProps> = ({ className = '' }) => {
-  const adRef = useRef<HTMLDivElement>(null);
-  const [adLoaded, setAdLoaded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // The Adsterra container ad should auto-populate via script
-    // Script: //pl27750815.revenuecpmgate.com/799e2d21c1644b80ff46596550eb2189/invoke.js
-    
-    // Wait for script to load and populate the container
-    const checkForAd = () => {
-      if (adRef.current) {
-        // Check if the ad has been populated by looking for iframe or other ad content
-        const hasAdContent = adRef.current.querySelector('iframe') || 
-                           adRef.current.querySelector('script') || 
-                           adRef.current.querySelector('div[style*="position"]') ||
-                           adRef.current.children.length > 1;
-        
-        if (hasAdContent) {
-          setAdLoaded(true);
-        }
+    // Load the container-based ad script dynamically
+    const loadScript = () => {
+      const script = document.createElement('script');
+      script.async = true;
+      script.setAttribute('data-cfasync', 'false');
+      script.src = '//pl27750815.revenuecpmgate.com/799e2d21c1644b80ff46596550eb2189/invoke.js';
+      
+      if (containerRef.current) {
+        containerRef.current.appendChild(script);
       }
     };
 
-    // Check immediately and then periodically
-    checkForAd();
-    const interval = setInterval(checkForAd, 1000);
-    
-    // Stop checking after 10 seconds
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-      if (!adLoaded) {
-        console.log('Adsterra container ad did not load within 10 seconds');
-      }
-    }, 10000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [adLoaded]);
+    // Load script after component mounts
+    setTimeout(loadScript, 1000);
+  }, []);
 
   return (
     <div className={`adsterra-ad-container w-full max-w-sm mx-auto ${className}`}>
-      {/* Your Adsterra ad container - this ID matches the script in index.html */}
       <div 
-        ref={adRef}
-        id="container-799e2d21c1644b80ff46596550eb2189" 
-        className="min-h-[250px] w-full relative bg-slate-50 border border-slate-200 rounded-lg overflow-hidden"
+        ref={containerRef}
+        id="container-799e2d21c1644b80ff46596550eb2189"
+        className="min-h-[250px] bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center"
       >
-        {/* Show loading state until ad loads */}
-        {!adLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-slate-400 text-sm">Loading Ad...</div>
-          </div>
-        )}
+        <div className="text-slate-400 text-sm">Ad Loading...</div>
       </div>
     </div>
   );
 };
 
-// Adsterra Skyscraper Ad (160x300 - script-based with atOptions)
+// Adsterra Skyscraper Ad (160x300 for desktop, 320x100 for mobile)
 export const AdsterraSkyscraper: React.FC<{ className?: string }> = ({ className = '' }) => {
-  const skyscraperRef = useRef<HTMLDivElement>(null);
-  const [adLoaded, setAdLoaded] = useState(false);
-  const adIdRef = useRef(`adsterra-skyscraper-${Math.random().toString(36).substr(2, 9)}`);
-  
+  const adRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    // Create and insert the script to load the ad
-    const loadSkyscraperAd = () => {
-      if (skyscraperRef.current && typeof window !== 'undefined') {
-        try {
-          // Create script element for this specific ad
-          const script = document.createElement('script');
-          script.type = 'text/javascript';
-          script.innerHTML = `
-            (function() {
-              const isMobile = window.innerWidth <= 768;
-              const adContainer = document.getElementById('${adIdRef.current}');
-              if (adContainer) {
-                // Create ad script element
-                const adScript = document.createElement('script');
-                adScript.type = 'text/javascript';
-                adScript.src = '//www.highperformanceformat.com/44502fa832b6f20211380f7a4b7c3fb8/invoke.js';
-                adScript.async = true;
-                
-                // Set up atOptions before loading script
-                window.atOptions = {
-                  'key' : '44502fa832b6f20211380f7a4b7c3fb8',
-                  'format' : 'iframe',
-                  'height' : isMobile ? 100 : 300,
-                  'width' : isMobile ? 320 : 160,
-                  'params' : {}
-                };
-                
-                adContainer.appendChild(adScript);
-                
-                // Check if ad loaded after a delay
-                setTimeout(() => {
-                  const hasAdContent = adContainer.querySelector('iframe') || 
-                                     adContainer.querySelector('div[style]') ||
-                                     adContainer.children.length > 1;
-                  if (hasAdContent) {
-                    window.adsterra_skyscraper_loaded = true;
-                  }
-                }, 2000);
-              }
-            })();
-          `;
-          
-          // Append and execute the script
-          document.head.appendChild(script);
-          
-          // Clean up script after execution
-          setTimeout(() => {
-            if (script.parentNode) {
-              script.parentNode.removeChild(script);
-            }
-          }, 1000);
-          
-        } catch (error) {
-          console.log('Error loading Adsterra skyscraper:', error);
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth <= 768;
+      
+      // Set up atOptions
+      (window as any).atOptions = {
+        'key': '44502fa832b6f20211380f7a4b7c3fb8',
+        'format': 'iframe',
+        'height': isMobile ? 100 : 300,
+        'width': isMobile ? 320 : 160,
+        'params': {}
+      };
+
+      // Load the skyscraper ad script
+      const loadScript = () => {
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = '//www.highperformanceformat.com/44502fa832b6f20211380f7a4b7c3fb8/invoke.js';
+        
+        if (adRef.current) {
+          adRef.current.appendChild(script);
         }
-      }
-    };
+      };
 
-    // Load the ad after component mounts
-    const timer = setTimeout(loadSkyscraperAd, 500);
-    
-    // Check for loaded ad
-    const checkInterval = setInterval(() => {
-      if ((window as any).adsterra_skyscraper_loaded || 
-          (skyscraperRef.current && (
-            skyscraperRef.current.querySelector('iframe') ||
-            skyscraperRef.current.querySelector('div[style]')
-          ))) {
-        setAdLoaded(true);
-        clearInterval(checkInterval);
-      }
-    }, 1000);
-
-    // Stop checking after 15 seconds
-    const stopTimer = setTimeout(() => {
-      clearInterval(checkInterval);
-    }, 15000);
-
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(stopTimer);
-      clearInterval(checkInterval);
-    };
+      // Load script after component mounts
+      setTimeout(loadScript, 1500);
+    }
   }, []);
 
   return (
     <div className={`adsterra-skyscraper-ad ${className}`}>
       <div 
-        ref={skyscraperRef}
-        id={adIdRef.current}
-        className="w-full max-w-sm mx-auto lg:max-w-none lg:w-40 relative"
-        style={{ minHeight: '100px' }}
+        ref={adRef}
+        className="bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center"
+        style={{
+          width: typeof window !== 'undefined' && window.innerWidth <= 768 ? '320px' : '160px',
+          height: typeof window !== 'undefined' && window.innerWidth <= 768 ? '100px' : '300px',
+          maxWidth: '100%'
+        }}
       >
-        {/* Show loading state until ad loads */}
-        {!adLoaded && (
-          <div className="h-24 lg:h-[300px] lg:w-40 bg-slate-50 border border-slate-200 rounded flex items-center justify-center text-xs text-slate-400">
-            Loading Skyscraper Ad...
-          </div>
-        )}
+        <div className="text-slate-400 text-xs">Skyscraper Ad Loading...</div>
       </div>
     </div>
   );
