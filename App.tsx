@@ -12,7 +12,6 @@ import { InitialStatePlaceholder } from './components/InitialStatePlaceholder';
 import { sampleResumeHtml } from './components/SampleResume';
 import { GoogleAd } from './components/GoogleAd';
 import { AdsterraSquare } from './components/AdsterraAd';
-import { getAdConfig } from './config/adConfig';
 
 const App: React.FC = () => {
   const [resumeText, setResumeText] = useState('');
@@ -117,7 +116,7 @@ const App: React.FC = () => {
             <JobDescriptionInput value={jobDescription} onChange={setJobDescription} />
             {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
             <GoogleAd />
-            <AdsterraSquare adKey={getAdConfig().ADSTERRA.KEYS.SQUARE_300x250} className="my-4" />
+            <AdsterraSquare className="my-4" />
             <button
               onClick={handleGenerateResume}
               disabled={isLoadingResume || !resumeText || !jobDescription}
