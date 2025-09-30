@@ -4,7 +4,7 @@ interface AdsterraAdProps {
   className?: string;
 }
 
-// Main Adsterra Ad component using your actual ad code
+// Main Adsterra Ad component using your actual ad code (container-based)
 export const AdsterraAd: React.FC<AdsterraAdProps> = ({ className = '' }) => {
   return (
     <div className={`adsterra-ad-container ${className}`}>
@@ -14,7 +14,17 @@ export const AdsterraAd: React.FC<AdsterraAdProps> = ({ className = '' }) => {
   );
 };
 
-// Convenient alias for your specific ad
+// Second Adsterra Ad (script-based, likely banner/popup)
+export const AdsterraBanner: React.FC<{ className?: string }> = ({ className = '' }) => {
+  return (
+    <div className={`adsterra-banner-ad ${className}`}>
+      {/* This ad is loaded via the script in index.html */}
+      <div className="text-center text-xs text-gray-400 p-2">Advertisement</div>
+    </div>
+  );
+};
+
+// Convenient alias for your specific square ad
 export const AdsterraSquare: React.FC<{ className?: string }> = ({ className }) => (
   <AdsterraAd className={className} />
 );
