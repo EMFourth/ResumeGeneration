@@ -176,40 +176,98 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         return;
       }
       
-      // Create a temporary div and add it to the DOM so it renders properly
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.width = '8.5in';
-      tempDiv.style.height = '11in';
-      tempDiv.style.backgroundColor = 'white';
+      // Try to get the iframe and capture its content directly
+      const iframe = document.querySelector('iframe[title="Resume Preview"]') as HTMLIFrameElement;
+      let elementToCapture;
       
-      // Use the exact same HTML content as the preview iframe
-      tempDiv.innerHTML = fullHtmlForPreview;
+      if (iframe && iframe.contentDocument) {
+        // If we can access the iframe content, use it directly
+        console.log("Using iframe content for PDF");
+        elementToCapture = iframe.contentDocument.body;
+        
+        // Ensure the iframe body has proper dimensions
+        if (elementToCapture) {
+          elementToCapture.style.width = '8.5in';
+          elementToCapture.style.height = '11in';
+          elementToCapture.style.margin = '0';
+          elementToCapture.style.padding = '0';
+          elementToCapture.style.backgroundColor = 'white';
+        }
+      } else {
+        // Fallback: create our own element
+        console.log("Creating fallback element for PDF");
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '-9999px';
+        tempDiv.style.width = '8.5in';
+        tempDiv.style.height = '11in';
+        tempDiv.style.backgroundColor = 'white';
+        tempDiv.style.fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        tempDiv.style.fontSize = '14px';
+        tempDiv.style.lineHeight = '1.4';
+        tempDiv.style.color = '#000';
+        
+        // Inject styles and content
+        tempDiv.innerHTML = `
+          <style>
+            ${resumeStyles}
+            body, html {
+              margin: 0;
+              padding: 0;
+              width: 8.5in;
+              height: 11in;
+              background: white;
+            }
+          </style>
+          <div class="resume-container">${htmlContent}</div>
+        `;
+        
+        document.body.appendChild(tempDiv);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait longer
+        elementToCapture = tempDiv;
+      }
       
-      // Add to DOM so styles are applied
-      document.body.appendChild(tempDiv);
-      
-      // Wait a moment for styles to be applied
-      await new Promise(resolve => setTimeout(resolve, 100));
+      if (!elementToCapture) {
+        throw new Error("Could not create element to capture for PDF");
+      }
       
       const opt = {
-        margin:       0,
-        filename:     'resume.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        margin: 0,
+        filename: 'resume.pdf',
+        image: { 
+          type: 'jpeg', 
+          quality: 1.0 
+        },
+        html2canvas: { 
+          scale: 3,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: true,
+          letterRendering: true,
+          width: 816,  // 8.5in at 96 DPI
+          height: 1056 // 11in at 96 DPI
+        },
+        jsPDF: { 
+          unit: 'in', 
+          format: 'letter', 
+          orientation: 'portrait',
+          compress: true
+        }
       };
       
-      await html2pdf().set(opt).from(tempDiv).save();
+      console.log("Generating PDF with element:", elementToCapture);
+      await html2pdf().set(opt).from(elementToCapture).save();
       
-      // Clean up
-      document.body.removeChild(tempDiv);
+      // Clean up fallback element if we created one
+      if (!iframe || !iframe.contentDocument) {
+        document.body.removeChild(elementToCapture as HTMLElement);
+      }
       
     } catch (error) {
       console.error("Failed to download PDF:", error);
-      alert("There was an error generating the PDF. Please try again.");
+      alert(`PDF generation failed: ${error.message}. Please try again.`);
     } finally {
       setIsDownloadingPdf(false);
     }
