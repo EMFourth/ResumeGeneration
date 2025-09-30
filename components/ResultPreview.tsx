@@ -168,140 +168,164 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
   const fullHtmlForPreview = `<style>${resumeStyles}</style><div class="resume-container">${htmlContent}</div>`;
 
+  // Build a filename like JohnDoeResumeYYYYMMDD based on the H1 name in the resume
+  const getDynamicFilenameBase = (html: string) => {
+    const date = new Date();
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const yyyymmdd = `${yyyy}${mm}${dd}`;
+
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html || '';
+    let nameText = '';
+    const h1 = tmp.querySelector('.right-column h1') || tmp.querySelector('h1');
+    if (h1 && h1.textContent) {
+      nameText = h1.textContent.trim();
+    } else {
+      const match = (html || '').match(/<h1[^>]*>(.*?)<\/h1>/i);
+      if (match && match[1]) {
+        const tempStrip = document.createElement('div');
+        tempStrip.innerHTML = match[1];
+        nameText = (tempStrip.textContent || '').trim();
+      }
+    }
+
+    const sanitize = (s: string) => s.replace(/[^A-Za-z]/g, '');
+    const titleCase = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
+
+    let first = '';
+    let last = '';
+    if (nameText) {
+      const parts = nameText
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(p => sanitize(p))
+        .filter(Boolean);
+      if (parts.length >= 1) first = titleCase(parts[0]);
+      if (parts.length >= 2) last = titleCase(parts[parts.length - 1]);
+    }
+
+    const namePart = `${first}${last}` || 'Resume';
+    return `${namePart}Resume${yyyymmdd}`;
+  };
+
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
-    
     try {
-      console.log("PDF button clicked!");
-      
       if (!htmlContent || htmlContent.trim() === "") {
         alert("No resume content to export. Please generate your resume first.");
         return;
       }
-      
-      // Create a blob with the HTML content
-      const htmlForPdf = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Resume</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: Arial, sans-serif; 
-              background: white;
-              padding: 0.5in;
-            }
-            ${resumeStyles}
-          </style>
-        </head>
-        <body>
-          <div class="resume-container">${htmlContent}</div>
-        </body>
-        </html>
-      `;
-      
-      // Method 1: Try html2pdf if available
-      if (typeof html2pdf !== 'undefined') {
-        console.log("Using html2pdf...");
-        const element = document.createElement('div');
-        element.innerHTML = htmlForPdf;
-        element.style.position = 'absolute';
-        element.style.left = '-9999px';
-        element.style.width = '8.5in';
-        document.body.appendChild(element);
-        
-        await html2pdf().set({
-          margin: 0.5,
-          filename: 'resume.pdf',
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-        }).from(element).save();
-        
-        document.body.removeChild(element);
-        console.log("PDF downloaded via html2pdf!");
-        return;
+
+      const filenameBase = getDynamicFilenameBase(htmlContent);
+
+      // Build an offscreen container in THIS document (html2canvas can't render iframe contents)
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'fixed';
+      wrapper.style.left = '-10000px';
+      wrapper.style.top = '0';
+      wrapper.style.width = '816px'; // 8.5in * 96dpi
+      wrapper.style.backgroundColor = '#ffffff';
+      wrapper.style.zIndex = '-1';
+
+      // Inject styles used by the preview
+      const styleEl = document.createElement('style');
+      styleEl.type = 'text/css';
+      styleEl.appendChild(document.createTextNode(resumeStyles));
+
+      // Create the resume DOM with the same class hooks as preview
+      const resumeEl = document.createElement('div');
+      resumeEl.className = 'resume-container';
+      resumeEl.innerHTML = htmlContent;
+
+      wrapper.appendChild(styleEl);
+      wrapper.appendChild(resumeEl);
+      document.body.appendChild(wrapper);
+
+      // Ensure layout is calculated
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      wrapper.offsetHeight;
+      await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 50)));
+
+      if (typeof html2pdf === 'undefined') {
+        throw new Error('html2pdf library not loaded');
       }
-      
-      // Method 2: Safe blob download fallback
-      console.log("Using safe blob download...");
-      const blob = new Blob([htmlForPdf], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'resume.html';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      alert("Downloaded as HTML file - open in browser and use Ctrl+P to save as PDF");
-      
-    } catch (error) {
-      console.error("PDF error:", error);
-      alert("PDF download failed: " + error.message);
+
+      const opt = {
+        margin: 0,
+        filename: `${filenameBase}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          windowWidth: 816,
+          windowHeight: Math.ceil(resumeEl.scrollHeight)
+        },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      } as const;
+
+      await html2pdf().set(opt).from(resumeEl).save();
+    } catch (error: any) {
+      console.error('PDF generation failed:', error);
+      // Last-resort fallback: download as HTML which can be printed to PDF
+      try {
+        const filenameBase = getDynamicFilenameBase(htmlContent);
+        const htmlDownload = `<!doctype html><html><head><meta charset=\"utf-8\"><style>${resumeStyles}</style></head><body><div class=\"resume-container\">${htmlContent}</div></body></html>`;
+        const blob = new Blob([htmlDownload], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filenameBase}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('PDF generator failed. Downloaded HTML that you can open and print to PDF.');
+      } catch (fallbackErr) {
+        console.error('HTML fallback failed:', fallbackErr);
+        alert('Unable to generate PDF. Please try again.');
+      }
     } finally {
+      // Attempt to clean up any offscreen wrappers if present
+      const orphanWrappers = Array.from(document.querySelectorAll('div'))
+        .filter(d => (d as HTMLElement).style?.left === '-10000px' && (d as HTMLElement).style?.position === 'fixed');
+      orphanWrappers.forEach(w => w.parentElement?.removeChild(w));
       setIsDownloadingPdf(false);
     }
   };
 
   const handleDownloadDocx = async () => {
     setIsDownloadingDocx(true);
-    
     try {
-      console.log("DOCX button clicked!");
-      
       if (!htmlContent || htmlContent.trim() === "") {
         alert("No resume content to export. Please generate your resume first.");
         return;
       }
-      
-      // Method 1: Try the existing downloadAsDocx function
-      try {
-        const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${resumeStyles}</style></head><body><div class="resume-container">${htmlContent}</div></body></html>`;
-        await downloadAsDocx(fullHtml, 'resume.docx');
-        console.log("DOCX downloaded via downloadAsDocx!");
+
+      const filenameBase = getDynamicFilenameBase(htmlContent);
+      const fullHtml = `<!doctype html><html><head><meta charset=\"UTF-8\"><style>${resumeStyles}</style></head><body><div class=\"resume-container\">${htmlContent}</div></body></html>`;
+
+      // Preferred: html-to-docx library
+      if ((window as any).htmlToDocx && typeof (window as any).htmlToDocx.asBlob === 'function') {
+        await downloadAsDocx(fullHtml, `${filenameBase}.docx`);
         return;
-      } catch (docxError) {
-        console.log("downloadAsDocx failed, trying fallback...", docxError);
       }
-      
-      // Method 2: Simple HTML download as fallback
-      const htmlContent_full = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Resume</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 1in; }
-            ${resumeStyles}
-          </style>
-        </head>
-        <body>
-          <div class="resume-container">${htmlContent}</div>
-        </body>
-        </html>
-      `;
-      
-      const blob = new Blob([htmlContent_full], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'resume.html';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      console.log("Downloaded as HTML file (can be opened in Word)");
-      alert("Downloaded as HTML file - you can open this in Microsoft Word to convert to DOCX format.");
-      
-    } catch (error) {
-      console.error("DOCX error:", error);
-      alert("Document download failed: " + error.message);
+
+      // Fallback 1: Serve as .doc (Word-compatible HTML)
+      const docBlob = new Blob([fullHtml], { type: 'application/msword' });
+      const docUrl = URL.createObjectURL(docBlob);
+      const a = document.createElement('a');
+      a.href = docUrl;
+      a.download = `${filenameBase}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(docUrl);
+      alert('Downloaded as .doc (Word-compatible). You can open and Save As DOCX in Word.');
+    } catch (error: any) {
+      console.error('DOCX export failed:', error);
+      alert('Document download failed. Please try again.');
     } finally {
       setIsDownloadingDocx(false);
     }
