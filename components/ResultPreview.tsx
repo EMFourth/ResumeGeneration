@@ -220,58 +220,87 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
       const filenameBase = getDynamicFilenameBase(htmlContent);
 
-      // Build an offscreen container in THIS document (html2canvas can't render iframe contents)
-      const wrapper = document.createElement('div');
-      wrapper.style.position = 'fixed';
-      wrapper.style.left = '-10000px';
-      wrapper.style.top = '0';
-      wrapper.style.width = '816px'; // 8.5in * 96dpi
-      wrapper.style.backgroundColor = '#ffffff';
-      wrapper.style.zIndex = '-1';
-
-      // Inject styles used by the preview
-      const styleEl = document.createElement('style');
-      styleEl.type = 'text/css';
-      styleEl.appendChild(document.createTextNode(resumeStyles));
-
-      // Create the resume DOM with the same class hooks as preview
-      const resumeEl = document.createElement('div');
-      resumeEl.className = 'resume-container';
-      resumeEl.innerHTML = htmlContent;
-
-      wrapper.appendChild(styleEl);
-      wrapper.appendChild(resumeEl);
-      document.body.appendChild(wrapper);
-
-      // Ensure layout is calculated
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      wrapper.offsetHeight;
-      await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 50)));
-
       if (typeof html2pdf === 'undefined') {
         throw new Error('html2pdf library not loaded');
       }
 
+      // Create a complete HTML document with inline styles
+      const completeHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              ${resumeStyles}
+              @page { 
+                size: letter; 
+                margin: 0; 
+              }
+              body { 
+                margin: 0; 
+                padding: 0;
+                width: 8.5in;
+                font-family: 'Segoe UI', sans-serif;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="resume-container">
+              ${htmlContent}
+            </div>
+          </body>
+        </html>
+      `;
+
+      // Create a temporary iframe to render the content
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.left = '-10000px';
+      iframe.style.top = '0';
+      iframe.style.width = '816px'; // 8.5in at 96dpi
+      iframe.style.height = '1056px'; // 11in at 96dpi
+      iframe.style.border = 'none';
+      document.body.appendChild(iframe);
+
+      // Wait for iframe to be ready
+      await new Promise<void>((resolve) => {
+        iframe.onload = () => resolve();
+        iframe.srcdoc = completeHtml;
+      });
+
+      // Give it a moment to render
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const opt = {
         margin: 0,
         filename: `${filenameBase}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 0.95 },
         html2canvas: {
-          scale: 2,
+          scale: 1.5,
+          useCORS: true,
           backgroundColor: '#ffffff',
-          windowWidth: 816,
-          windowHeight: Math.ceil(resumeEl.scrollHeight)
+          width: 816,
+          height: 1056
         },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      } as const;
+        jsPDF: { 
+          unit: 'pt', 
+          format: 'letter', 
+          orientation: 'portrait' 
+        }
+      };
 
-      await html2pdf().set(opt).from(resumeEl).save();
+      // Generate PDF from the iframe document
+      await html2pdf().set(opt).from(iframe.contentDocument!.body).save();
+
+      // Clean up
+      document.body.removeChild(iframe);
+
     } catch (error: any) {
       console.error('PDF generation failed:', error);
       // Last-resort fallback: download as HTML which can be printed to PDF
       try {
         const filenameBase = getDynamicFilenameBase(htmlContent);
-        const htmlDownload = `<!doctype html><html><head><meta charset=\"utf-8\"><style>${resumeStyles}</style></head><body><div class=\"resume-container\">${htmlContent}</div></body></html>`;
+        const htmlDownload = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${resumeStyles}</style></head><body><div class="resume-container">${htmlContent}</div></body></html>`;
         const blob = new Blob([htmlDownload], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -287,10 +316,6 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         alert('Unable to generate PDF. Please try again.');
       }
     } finally {
-      // Attempt to clean up any offscreen wrappers if present
-      const orphanWrappers = Array.from(document.querySelectorAll('div'))
-        .filter(d => (d as HTMLElement).style?.left === '-10000px' && (d as HTMLElement).style?.position === 'fixed');
-      orphanWrappers.forEach(w => w.parentElement?.removeChild(w));
       setIsDownloadingPdf(false);
     }
   };
