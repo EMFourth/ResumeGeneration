@@ -1,0 +1,37 @@
+[build]
+  # Build command
+  command = "npm run build"
+  
+  # Output directory
+  publish = "dist"
+  
+  # Environment variables for build
+  [build.environment]
+    NODE_VERSION = "18"
+
+# Redirects (equivalent to vercel.json redirects)
+[[redirects]]
+  from = "/ads.txt"
+  to = "https://srv.adstxtmanager.com/19390/resume-gen.app"
+  status = 301
+  force = true
+
+# SPA routing - catch all routes and serve index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers (equivalent to vercel.json headers)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, immutable, max-age=31536000"
