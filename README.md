@@ -19,47 +19,53 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Qof2Iul3CK3UQFsc-cpVpl
 
 ## Run Locally
 
-**Prerequisites:** Node.js 16+ and npm
+Prerequisites: Node.js 18+ and npm
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/EMFourth/ResumeGeneration.git
-   cd ResumeGeneration
-   ```
+1) Clone and install
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+```bash
+git clone https://github.com/EMFourth/ResumeGeneration.git
+cd ResumeGeneration
+npm install
+```
 
-3. **Set up your API key:**
-   - Copy `.env.local.example` to `.env.local`
-   - Get your Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
-   - Add your API key to `.env.local`:
-     ```
-     GEMINI_API_KEY=your_gemini_api_key_here
-     ```
+2) Configure environment
 
-4. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
+```bash
+cp .env.local.example .env.local
+# Edit .env.local and set your API key
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-5. **Open your browser:**
-   Navigate to `http://localhost:3000`
+3) Start the dev server
+
+```bash
+npm run dev
+```
+
+Open http://localhost:3000
+
+4) Optional: Test production build locally
+
+```bash
+npm run build
+npm run preview
+```
+
+Open http://localhost:4173
+
+5) VS Code one-click run (optional)
+
+- Press F5 and choose “Launch Dev (Vite)” to auto-start the dev server and open a browser
+- Or use Run and Debug → “Launch Preview (build)” after a build
+- You can also run Tasks → “npm: dev”, “npm: build”, or “npm: preview”
 
 ## Deployment
 
-### Vercel Deployment (Recommended)
+### Netlify / Vercel
 
-This project is optimized for Vercel deployment with the included `vercel.json` configuration.
-
-1. **Connect your GitHub repository to Vercel**
-2. **Set up environment variables in Vercel:**
-   - Go to your Vercel project dashboard
-   - Navigate to Settings → Environment Variables
-   - Add `GEMINI_API_KEY` with your API key value
-3. **Deploy automatically** - Vercel will build and deploy on every push to main
+- Netlify: SPA redirects are configured via `netlify.toml`. Set environment variable `GEMINI_API_KEY` in your site settings. Push to deploy.
+- Vercel: `vercel.json` is provided. Set `GEMINI_API_KEY` in Project → Settings → Environment Variables. Push to deploy.
 
 ### Environment Variables
 
@@ -83,6 +89,6 @@ npm run preview
 
 ## Troubleshooting
 
-- **"An API Key must be set" error:** Make sure your `GEMINI_API_KEY` is properly set in `.env.local` for local development or in Vercel environment variables for production.
+- **"An API Key must be set" error:** Make sure your `GEMINI_API_KEY` is properly set in `.env.local` for local development or in your hosting provider’s environment variables for production.
 - **Resume not generating:** The app will gracefully fall back to showing a sample resume if the API call fails, allowing you to test the interface even without a valid API key.
 # Force deployment for ads.txt redirect
