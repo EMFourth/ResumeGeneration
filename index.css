@@ -67,6 +67,47 @@
   margin-bottom: 12px;
 }
 
+/* Ad Container Styles for Better Mobile Responsiveness */
+.adsterra-ad-container,
+.adsterra-skyscraper-ad,
+.google-ad-container {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Mobile-specific ad adjustments */
+@media (max-width: 768px) {
+  .adsterra-ad-container {
+    padding: 8px;
+  }
+  
+  .adsterra-skyscraper-ad {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100px;
+  }
+  
+  /* Ensure ads don't break mobile layout */
+  .google-ad-container ins,
+  .adsterra-ad-container > div {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* Prevent horizontal scroll on mobile */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .adsterra-skyscraper-ad {
+    margin: 0 auto;
+    text-align: center;
+  }
+}
+
 /* Print styles */
 @media print {
   .resume-layout {
@@ -76,5 +117,12 @@
   .resume-layout .left-column,
   .resume-layout .right-column {
     padding: 15px;
+  }
+  
+  /* Hide ads when printing */
+  .adsterra-ad-container,
+  .adsterra-skyscraper-ad,
+  .google-ad-container {
+    display: none !important;
   }
 }

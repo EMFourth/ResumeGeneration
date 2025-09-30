@@ -108,8 +108,8 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
       <Header />
       <main className="container mx-auto p-4 md:p-8">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 lg:gap-8">
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
           {/* Input Section */}
           <div className="flex flex-col gap-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <h2 className="text-2xl font-bold text-slate-700">Your Information</h2>
@@ -161,8 +161,8 @@ const App: React.FC = () => {
           </div>
           
           {/* Sidebar with Skyscraper Ad */}
-          <div className="lg:w-48 flex justify-center lg:justify-start">
-            <AdsterraSkyscraper className="sticky top-4" />
+          <div className="w-full lg:w-48 flex justify-center lg:justify-start">
+            <AdsterraSkyscraper className="lg:sticky lg:top-4 w-full lg:w-auto" />
           </div>
         </div>
       </main>

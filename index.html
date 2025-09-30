@@ -53,11 +53,13 @@
     
     <!-- Adsterra Skyscraper Ad -->
     <script type="text/javascript">
+        // Responsive ad configuration
+        const isMobile = window.innerWidth <= 768;
         atOptions = {
             'key' : '44502fa832b6f20211380f7a4b7c3fb8',
             'format' : 'iframe',
-            'height' : 300,
-            'width' : 160,
+            'height' : isMobile ? 100 : 300,
+            'width' : isMobile ? 320 : 160,
             'params' : {}
         };
     </script>
