@@ -220,7 +220,141 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
       const filenameBase = getDynamicFilenameBase(htmlContent);
 
-      // Create iframe for better isolation and styling
+      // Create optimized PDF styles (no borders, better margins)
+      const pdfStyles = `
+        body { 
+          background-color: #ffffff;
+          margin: 0;
+          padding: 0;
+          font-family: 'Segoe UI', Candara, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+          line-height: 1.4; 
+          color: #4a5568;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .resume-container {
+          background-color: white;
+          width: 100%;
+          padding: 0;
+          margin: 0;
+          box-sizing: border-box;
+          /* Remove border for PDF */
+        }
+        .resume-layout {
+          width: 100%;
+          border-collapse: collapse;
+          table-layout: fixed;
+          margin: 0;
+          padding: 0;
+        }
+        
+        /* Left Column: Blue Sidebar */
+        .left-column {
+          width: 33%;
+          vertical-align: top;
+          background-color: #4a90e2;
+          color: white;
+          padding: 0.5in 0.4in;
+          box-sizing: border-box;
+        }
+        .left-column h2 {
+          font-family: 'Segoe UI', sans-serif;
+          font-size: 1rem;
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+          padding-bottom: 0.3rem;
+          margin-top: 1rem;
+          margin-bottom: 0.8rem;
+        }
+        .left-column h2:first-of-type {
+          margin-top: 0;
+        }
+        .left-column h3 {
+          font-size: 0.95rem;
+          font-weight: bold;
+          margin-top: 1rem;
+          margin-bottom: 0.1rem;
+          color: white;
+        }
+        .left-column p {
+          font-size: 0.9rem;
+          line-height: 1.5;
+          margin-bottom: 0.4rem;
+          color: #f0f0f0;
+        }
+        .left-column p strong {
+          color: white;
+        }
+
+        /* Right Column: Main Content */
+        .right-column {
+          width: 67%;
+          vertical-align: top;
+          padding: 0.5in 0.6in;
+          box-sizing: border-box;
+        }
+        .right-column h1 {
+          font-family: 'Garamond', 'Times New Roman', Times, serif;
+          font-size: 2.4rem;
+          font-weight: 600;
+          color: #2d3748;
+          margin: 0 0 0.2rem 0;
+          padding: 0;
+        }
+        .right-column h1 + p {
+          font-size: 0.9rem;
+          color: #4a5568;
+          margin: 0 0 1.5rem 0;
+        }
+        .right-column h2 {
+          font-family: 'Segoe UI', sans-serif;
+          font-size: 1rem;
+          font-weight: bold;
+          color: #4a90e2;
+          border-bottom: 2px solid #e2e8f0;
+          padding-bottom: 0.3rem;
+          margin-top: 1.2rem;
+          margin-bottom: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+        }
+        .right-column h2:first-of-type {
+          margin-top: 0;
+        }
+        .right-column h3 {
+          font-size: 1.1rem;
+          font-weight: bold;
+          color: #2d3748;
+          margin-top: 1rem;
+          margin-bottom: 0.2rem;
+        }
+        .right-column p {
+          font-size: 0.9rem;
+          line-height: 1.5;
+          margin-bottom: 0.4rem;
+          color: #4a5568;
+        }
+        .right-column ul {
+          margin: 0.5rem 0 1rem 0;
+          padding-left: 1.2rem;
+        }
+        .right-column li {
+          font-size: 0.9rem;
+          line-height: 1.5;
+          margin-bottom: 0.3rem;
+          color: #4a5568;
+        }
+        .right-column strong {
+          color: #2d3748;
+          font-weight: 600;
+        }
+      `;
+
+      // Create iframe for PDF generation
       const iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
       iframe.style.left = '-10000px';
@@ -243,19 +377,7 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
             <head>
               <meta charset="UTF-8">
               <style>
-                ${resumeStyles}
-                body { 
-                  margin: 0; 
-                  padding: 20px;
-                  font-family: 'Segoe UI', sans-serif;
-                  background: white;
-                  width: 8.5in;
-                }
-                .resume-container {
-                  background: white;
-                  width: 100%;
-                  height: auto;
-                }
+                ${pdfStyles}
               </style>
             </head>
             <body>
@@ -268,31 +390,35 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         doc.close();
       });
 
-      // Wait for styles and fonts to load
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait longer for fonts and content to fully load
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const resumeElement = iframe.contentDocument!.body;
 
       try {
-        // Method 1: Try html2pdf with better settings
+        // Use html2pdf with optimized settings for better layout
         if (typeof (window as any).html2pdf !== 'undefined') {
           const opt = {
-            margin: [10, 10, 10, 10], // Small margins in pt
+            margin: [0.4, 0.4, 0.4, 0.4], // Minimal margins in inches
             filename: `${filenameBase}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
+            image: { type: 'jpeg', quality: 0.95 },
             html2canvas: {
               scale: 2,
               useCORS: true,
               allowTaint: true,
               backgroundColor: '#ffffff',
               logging: false,
-              letterRendering: true
+              letterRendering: true,
+              width: 816, // 8.5 inches * 96 DPI
+              height: 1056, // 11 inches * 96 DPI
+              scrollX: 0,
+              scrollY: 0
             },
             jsPDF: { 
-              unit: 'pt', 
+              unit: 'in', 
               format: 'letter', 
               orientation: 'portrait',
-              compress: false
+              compress: true
             }
           };
 

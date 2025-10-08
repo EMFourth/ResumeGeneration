@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Generation Test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .test-container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .test-btn {
+      background: #007bff;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+      font-size: 16px;
+    }
+
+    .test-btn:hover {
+      background: #0056b3;
+    }
+
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid;
+    }
+
+    .success { 
+      background: #d4edda; 
+      color: #155724; 
+      border-color: #28a745;
+    }
+    
+    .error { 
+      background: #f8d7da; 
+      color: #721c24; 
+      border-color: #dc3545;
+    }
+
+    /* Resume Styles for Testing - Optimized for PDF */
+    .resume-container {
+      background-color: white;
+      width: 100%;
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    
+    .resume-layout {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .left-column {
+      width: 33%;
+      vertical-align: top;
+      background-color: #4a90e2;
+      color: white;
+      padding: 0.5in 0.4in;
+      box-sizing: border-box;
+    }
+    
+    .left-column h2 {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 1rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+      padding-bottom: 0.3rem;
+      margin-top: 1rem;
+      margin-bottom: 0.8rem;
+    }
+    
+    .left-column h2:first-of-type {
+      margin-top: 0;
+    }
+    
+    .left-column h3 {
+      font-size: 0.95rem;
+      font-weight: bold;
+      margin-top: 1rem;
+      margin-bottom: 0.1rem;
+      color: white;
+    }
+    
+    .left-column p {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 0.4rem;
+      color: #f0f0f0;
+    }
+    
+    .left-column p strong {
+      color: white;
+    }
+    
+    .right-column {
+      width: 67%;
+      vertical-align: top;
+      padding: 0.5in 0.6in;
+      box-sizing: border-box;
+    }
+    
+    .right-column h1 {
+      font-family: 'Garamond', 'Times New Roman', Times, serif;
+      font-size: 2.4rem;
+      font-weight: 600;
+      color: #2d3748;
+      margin: 0 0 0.2rem 0;
+      padding: 0;
+    }
+    
+    .right-column h1 + p {
+      font-size: 0.9rem;
+      color: #4a5568;
+      margin: 0 0 1.5rem 0;
+    }
+    
+    .right-column h2 {
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #4a90e2;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0.3rem;
+      margin-top: 1.2rem;
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    .right-column h2:first-of-type {
+      margin-top: 0;
+    }
+    
+    .right-column h3 {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #2d3748;
+      margin-top: 1rem;
+      margin-bottom: 0.2rem;
+    }
+    
+    .right-column p {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 0.4rem;
+      color: #4a5568;
+    }
+    
+    .right-column ul {
+      margin: 0.5rem 0 1rem 0;
+      padding-left: 1.2rem;
+    }
+    
+    .right-column li {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 0.3rem;
+      color: #4a5568;
+    }
+    
+    .right-column strong {
+      color: #2d3748;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🧪 PDF Generation Testing Lab</h1>
+    <p>This page tests the updated PDF generation with proper margins, no border, and optimized layout.</p>
+    
+    <div>
+      <button class="test-btn" onclick="testPdfGeneration()">📄 Test PDF Generation</button>
+      <button class="test-btn" onclick="validateResumeContent()">✅ Validate Content</button>
+    </div>
+
+    <div id="results"></div>
+
+    <div class="test-container">
+      <h2>📋 Sample Resume (This is what gets converted to PDF)</h2>
+      <div id="resumeContent">
+        <div class="resume-container">
+          <table class="resume-layout">
+            <tbody>
+              <tr>
+                <td class="left-column">
+                  <h2>Skills</h2>
+                  <p><strong>Technical Skills:</strong> JavaScript (ES6+), TypeScript, React, Node.js, HTML5, CSS3, SQL, NoSQL, AWS, Docker, Git</p>
+                  <p><strong>Soft Skills:</strong> Agile Methodologies, Problem Solving, Team Collaboration, Communication, Leadership</p>
+                  
+                  <h2>Education</h2>
+                  <div>
+                    <h3>B.S. in Computer Science</h3>
+                    <p><strong>State University</strong></p>
+                    <p>Anytown, USA</p>
+                    <p>Graduated May 2020</p>
+                    <p>GPA: 3.8/4.0</p>
+                  </div>
+
+                  <h2>Certifications</h2>
+                  <div>
+                    <h3>AWS Solutions Architect</h3>
+                    <p><strong>Amazon Web Services</strong></p>
+                    <p>Valid through 2025</p>
+                  </div>
+                </td>
+                <td class="right-column">
+                  <h1>Jane Doe</h1>
+                  <p>555-555-5555 | jane.doe@email.com | linkedin.com/in/janedoe | Portfolio: janedoe.dev</p>
+
+                  <h2>Summary</h2>
+                  <p>Results-driven Software Engineer with 4+ years of experience in developing, testing, and maintaining web applications. Proficient in JavaScript, React, and Node.js, with a passion for creating intuitive user experiences and scalable backend solutions.</p>
+
+                  <h2>Experience</h2>
+                  <div>
+                    <h3>Senior Software Engineer</h3>
+                    <p><strong>Tech Solutions Inc.</strong> | Anytown, USA | June 2022 – Present</p>
+                    <ul>
+                      <li>Lead development of React applications serving 50k+ users, resulting in a 25% increase in user engagement</li>
+                      <li>Architected and implemented microservices using Node.js and AWS, improving system scalability by 300%</li>
+                      <li>Collaborated with cross-functional teams to deliver features on time and within budget</li>
+                      <li>Mentored 3 junior developers and conducted code reviews to maintain high code quality standards</li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h3>Software Engineer</h3>
+                    <p><strong>Innovation Corp.</strong> | Anytown, USA | June 2020 – May 2022</p>
+                    <ul>
+                      <li>Developed and maintained client-side applications using React, resulting in a 20% increase in user engagement</li>
+                      <li>Built RESTful APIs using Node.js and Express, serving data to multiple frontend applications</li>
+                      <li>Implemented automated testing strategies, reducing bugs in production by 40%</li>
+                      <li>Participated in agile development processes and daily standups</li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h3>Software Engineer Intern</h3>
+                    <p><strong>StartUp Ventures</strong> | Anytown, USA | May 2019 – August 2019</p>
+                    <ul>
+                      <li>Assisted in the development of a new REST API using Node.js and Express</li>
+                      <li>Participated in code reviews and agile ceremonies</li>
+                      <li>Contributed to documentation and testing processes</li>
+                    </ul>
+                  </div>
+
+                  <h2>Projects</h2>
+                  <div>
+                    <h3>E-Commerce Platform</h3>
+                    <p><strong>Personal Project</strong> | 2023</p>
+                    <ul>
+                      <li>Built full-stack e-commerce platform using React, Node.js, and MongoDB</li>
+                      <li>Implemented payment processing using Stripe API</li>
+                      <li>Deployed using Docker and AWS EC2 with CI/CD pipeline</li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function logResult(message, type = 'info') {
+      const results = document.getElementById('results');
+      const statusDiv = document.createElement('div');
+      statusDiv.className = `status ${type}`;
+      statusDiv.innerHTML = `${new Date().toLocaleTimeString()}: ${message}`;
+      results.appendChild(statusDiv);
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+
+    async function testPdfGeneration() {
+      try {
+        logResult('🔄 Starting PDF generation test...', 'info');
+        
+        // Check if html2pdf is loaded
+        if (typeof html2pdf === 'undefined') {
+          throw new Error('html2pdf library not loaded');
+        }
+        
+        logResult('✅ html2pdf library loaded successfully', 'success');
+        
+        // Get the resume content
+        const resumeElement = document.getElementById('resumeContent');
+        if (!resumeElement) {
+          throw new Error('Resume content not found');
+        }
+        
+        logResult('✅ Resume content found', 'success');
+
+        // Create iframe for PDF generation (same approach as production)
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.left = '-10000px';
+        iframe.style.top = '0';
+        iframe.style.width = '8.5in';
+        iframe.style.height = '11in';
+        iframe.style.border = 'none';
+        iframe.style.backgroundColor = 'white';
+        document.body.appendChild(iframe);
+
+        logResult('🔄 Creating isolated PDF rendering iframe...', 'info');
+
+        // Wait for iframe to load
+        await new Promise((resolve) => {
+          iframe.onload = () => resolve();
+          
+          const doc = iframe.contentDocument;
+          doc.open();
+          doc.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="UTF-8">
+                <style>
+                  body { 
+                    background-color: #ffffff;
+                    margin: 0;
+                    padding: 0;
+                    font-family: 'Segoe UI', Candara, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    line-height: 1.4; 
+                    color: #4a5568;
+                    width: 100%;
+                    box-sizing: border-box;
+                  }
+                  ${document.querySelector('style').innerHTML}
+                </style>
+              </head>
+              <body>
+                ${resumeElement.innerHTML}
+              </body>
+            </html>
+          `);
+          doc.close();
+        });
+
+        logResult('✅ Iframe loaded with resume content', 'success');
+
+        // Wait for fonts and content to fully load
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        logResult('🔄 Generating PDF with optimized settings...', 'info');
+
+        // Generate PDF with the same settings as production
+        const opt = {
+          margin: [0.4, 0.4, 0.4, 0.4], // Minimal margins in inches
+          filename: 'test-resume.pdf',
+          image: { type: 'jpeg', quality: 0.95 },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            letterRendering: true,
+            width: 816, // 8.5 inches * 96 DPI
+            height: 1056, // 11 inches * 96 DPI
+            scrollX: 0,
+            scrollY: 0
+          },
+          jsPDF: { 
+            unit: 'in', 
+            format: 'letter', 
+            orientation: 'portrait',
+            compress: true
+          }
+        };
+
+        const element = iframe.contentDocument.body;
+        await html2pdf().set(opt).from(element).save();
+
+        logResult('🎉 PDF generated and downloaded successfully!', 'success');
+        logResult('📋 Check the downloaded PDF for: proper margins, complete content, no large white spaces', 'info');
+
+        // Cleanup
+        document.body.removeChild(iframe);
+        
+      } catch (error) {
+        logResult(`❌ PDF generation failed: ${error.message}`, 'error');
+        console.error('PDF Error:', error);
+      }
+    }
+
+    function validateResumeContent() {
+      logResult('🔄 Validating resume content...', 'info');
+      
+      const resumeElement = document.getElementById('resumeContent');
+      const content = resumeElement.textContent || resumeElement.innerText;
+      
+      // Check for all key sections
+      const checks = [
+        { item: 'Name (Jane Doe)', found: content.includes('Jane Doe') },
+        { item: 'Contact Info', found: content.includes('jane.doe@email.com') },
+        { item: 'Skills Section', found: content.includes('Technical Skills') },
+        { item: 'Education Section', found: content.includes('B.S. in Computer Science') },
+        { item: 'Experience Section', found: content.includes('Senior Software Engineer') },
+        { item: 'Projects Section', found: content.includes('E-Commerce Platform') },
+        { item: 'Certifications', found: content.includes('AWS Solutions Architect') },
+        { item: 'Multiple Job Roles', found: content.includes('Innovation Corp') },
+        { item: 'Detailed Descriptions', found: content.includes('50k+ users') }
+      ];
+      
+      let passedChecks = 0;
+      checks.forEach(check => {
+        if (check.found) {
+          logResult(`✅ ${check.item}: Found`, 'success');
+          passedChecks++;
+        } else {
+          logResult(`❌ ${check.item}: Missing`, 'error');
+        }
+      });
+      
+      const percentage = Math.round((passedChecks / checks.length) * 100);
+      
+      if (percentage === 100) {
+        logResult(`🎉 Content validation: ${passedChecks}/${checks.length} (${percentage}%) - All content present!`, 'success');
+      } else {
+        logResult(`⚠️ Content validation: ${passedChecks}/${checks.length} (${percentage}%) - Some content missing`, 'error');
+      }
+    }
+
+    // Auto-validate content on page load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        logResult('🚀 PDF Test Lab loaded - Ready for testing!', 'success');
+        validateResumeContent();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
