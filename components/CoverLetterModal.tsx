@@ -12,11 +12,29 @@ export const CoverLetterModal: React.FC<CoverLetterModalProps> = ({ isOpen, onCl
 
   if (!isOpen) return null;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(content).then(() => {
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
       setCopyButtonText('Copied!');
       setTimeout(() => setCopyButtonText('Copy to Clipboard'), 2000);
-    });
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      // Fallback: try older method for compatibility
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = content;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopyButtonText('Copied!');
+        setTimeout(() => setCopyButtonText('Copy to Clipboard'), 2000);
+      } catch (fallbackError) {
+        console.error('Fallback copy also failed:', fallbackError);
+        setCopyButtonText('Copy Failed');
+        setTimeout(() => setCopyButtonText('Copy to Clipboard'), 2000);
+      }
+    }
   };
 
   return (

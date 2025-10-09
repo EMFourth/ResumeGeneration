@@ -1,29 +1,29 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React from 'react';
 
-interface Props {
-  children: ReactNode;
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
 }
 
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-  };
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }
 
-  public render() {
+  render() {
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center h-screen text-center text-slate-600 bg-slate-50 p-8">
@@ -37,6 +37,12 @@ class ErrorBoundary extends Component<Props, State> {
               </pre>
             </details>
           )}
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Refresh Page
+          </button>
         </div>
       );
     }

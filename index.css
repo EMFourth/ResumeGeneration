@@ -69,15 +69,47 @@
 
 /* Ad Container Styles for Better Mobile Responsiveness */
 .adsterra-ad-container,
+.adsterra-banner-container,
+.adsterra-leaderboard-container,
 .adsterra-skyscraper-ad,
 .google-ad-container {
   max-width: 100%;
   overflow: hidden;
 }
 
+/* Banner Ad (468x60) Mobile Responsiveness */
+.adsterra-banner-container {
+  max-width: 468px;
+  width: 100%;
+}
+
+@media (max-width: 500px) {
+  .adsterra-banner-container > div {
+    width: 100% !important;
+    max-width: calc(100vw - 2rem) !important;
+    min-width: 300px;
+  }
+}
+
+/* Leaderboard Ad (728x90) Mobile Responsiveness */
+.adsterra-leaderboard-container {
+  max-width: 728px;
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  .adsterra-leaderboard-container > div {
+    width: 100% !important;
+    max-width: calc(100vw - 2rem) !important;
+    min-width: 320px;
+  }
+}
+
 /* Mobile-specific ad adjustments */
 @media (max-width: 768px) {
-  .adsterra-ad-container {
+  .adsterra-ad-container,
+  .adsterra-banner-container,
+  .adsterra-leaderboard-container {
     padding: 8px;
   }
   
@@ -89,9 +121,10 @@
   
   /* Ensure ads don't break mobile layout */
   .google-ad-container ins,
-  .adsterra-ad-container > div {
+  .adsterra-ad-container > div,
+  .adsterra-banner-container > div,
+  .adsterra-leaderboard-container > div {
     max-width: 100% !important;
-    width: 100% !important;
   }
 }
 
@@ -121,6 +154,8 @@
   
   /* Hide ads when printing */
   .adsterra-ad-container,
+  .adsterra-banner-container,
+  .adsterra-leaderboard-container,
   .adsterra-skyscraper-ad,
   .google-ad-container {
     display: none !important;

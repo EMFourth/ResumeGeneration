@@ -10,8 +10,7 @@ import { SparklesIcon } from './components/icons/SparklesIcon';
 import { generateTailoredResume, generateCoverLetter } from './services/geminiService';
 import { InitialStatePlaceholder } from './components/InitialStatePlaceholder';
 import { sampleResumeHtml } from './components/SampleResume';
-import { GoogleAd } from './components/GoogleAd';
-import { AdsterraSquare } from './components/AdsterraAd';
+import { AdsterraIframe, AdsterraLeaderboard } from './components/AdsterraAd';
 
 const App: React.FC = () => {
   const [resumeText, setResumeText] = useState('');
@@ -107,61 +106,70 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
       <Header />
+      
+      {/* Top Banner Ad - After title, before content */}
+      <div className="container mx-auto px-4 md:px-8 py-4">
+        <div className="flex justify-center">
+          <AdsterraIframe />
+        </div>
+      </div>
+      
       <main className="container mx-auto p-4 md:p-8">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 lg:gap-8">
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
-          {/* Input Section */}
-          <div className="flex flex-col gap-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h2 className="text-2xl font-bold text-slate-700">Your Information</h2>
-            <ResumeInput onParsed={handleResumeParsed} onFileChange={setResumeFileName} />
-            <JobDescriptionInput value={jobDescription} onChange={setJobDescription} />
-            {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
-            <AdsterraSquare className="my-4" />
-            <button
-              onClick={handleGenerateResume}
-              disabled={isLoadingResume || !resumeText || !jobDescription}
-              className="flex items-center justify-center gap-2 w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              {isLoadingResume ? (
-                <>
-                  <Spinner />
-                  <span>Tailoring Your Resume...</span>
-                </>
-              ) : (
-                <>
-                  <SparklesIcon className="w-5 h-5" />
-                  <span>Create Perfect Resume</span>
-                </>
-              )}
-            </button>
-          </div>
+        <div className="max-w-6xl mx-auto">
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
+            {/* Input Section */}
+            <div className="flex flex-col gap-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <h2 className="text-2xl font-bold text-slate-700">Your Information</h2>
+              <ResumeInput onParsed={handleResumeParsed} onFileChange={setResumeFileName} />
+              <JobDescriptionInput value={jobDescription} onChange={setJobDescription} />
+              {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
+              
+              <button
+                onClick={handleGenerateResume}
+                disabled={isLoadingResume || !resumeText || !jobDescription}
+                className="flex items-center justify-center gap-2 w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                {isLoadingResume ? (
+                  <>
+                    <Spinner />
+                    <span>Tailoring Your Resume...</span>
+                  </>
+                ) : (
+                  <>
+                    <SparklesIcon className="w-5 h-5" />
+                    <span>Create Perfect Resume</span>
+                  </>
+                )}
+              </button>
+            </div>
 
-          {/* Output Section */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 min-h-[600px] flex flex-col">
-            <h2 className="text-2xl font-bold text-slate-700 mb-4">AI-Powered Result</h2>
-            {isLoadingResume ? (
-              <div className="flex flex-col items-center justify-center flex-grow text-slate-500">
-                <Spinner />
-                <p className="mt-4 text-lg">Generating your tailored resume...</p>
-                <p className="text-sm">This may take a moment.</p>
-              </div>
-            ) : generatedResumeHtml ? (
-              <ResultPreview
-                htmlContent={generatedResumeHtml}
-                explanation={generationExplanation}
-                onGenerateCoverLetter={handleGenerateCoverLetter}
-                isCoverLetterLoading={isLoadingCoverLetter}
-                generationFailed={generationFailed}
-              />
-            ) : (
-               <InitialStatePlaceholder />
-            )}
-          </div>
+            {/* Output Section */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 min-h-[600px] flex flex-col">
+              <h2 className="text-2xl font-bold text-slate-700 mb-4">AI-Powered Result</h2>
+              {isLoadingResume ? (
+                <div className="flex flex-col items-center justify-center flex-grow text-slate-500">
+                  <Spinner />
+                  <p className="mt-4 text-lg">Generating your tailored resume...</p>
+                  <p className="text-sm">This may take a moment.</p>
+                </div>
+              ) : generatedResumeHtml ? (
+                <ResultPreview
+                  htmlContent={generatedResumeHtml}
+                  explanation={generationExplanation}
+                  onGenerateCoverLetter={handleGenerateCoverLetter}
+                  isCoverLetterLoading={isLoadingCoverLetter}
+                  generationFailed={generationFailed}
+                />
+              ) : (
+                 <InitialStatePlaceholder />
+              )}
+            </div>
           </div>
           
-          {/* Sidebar - Removed skyscraper ad */}
-          <div className="w-full lg:w-48 flex justify-center lg:justify-start">
-            {/* Skyscraper ad removed as requested */}
+          {/* Bottom Leaderboard Ad - Mobile responsive */}
+          <div className="flex justify-center mb-8 px-4">
+            <AdsterraLeaderboard />
           </div>
         </div>
       </main>
