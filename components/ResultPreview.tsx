@@ -220,8 +220,13 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
 
       const filenameBase = getDynamicFilenameBase(htmlContent);
 
-      // Create optimized PDF styles (no borders, better margins)
+      // Create optimized PDF styles (no borders, better margins, multi-page support)
       const pdfStyles = `
+        @page {
+          size: letter;
+          margin: 0.4in;
+        }
+        
         body { 
           background-color: #ffffff;
           margin: 0;
@@ -340,63 +345,115 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
         }
         .right-column ul {
           margin: 0.5rem 0 1rem 0;
-          padding-left: 1.2rem;
+          padding-left: 0;
+          list-style: none;
         }
         .right-column li {
           font-size: 0.9rem;
           line-height: 1.5;
           margin-bottom: 0.3rem;
           color: #4a5568;
+          position: relative;
+          padding-left: 1.2rem;
+        }
+        /* Use CSS bullet points that are guaranteed to show */
+        .right-column li::before {
+          content: "•";
+          color: #4a5568;
+          font-weight: bold;
+          position: absolute;
+          left: 0;
+          top: 0;
         }
         .right-column strong {
           color: #2d3748;
           font-weight: 600;
         }
+        
+        /* Enhanced page break rules for proper multi-page flow */
+        h1, h2, h3, h4, h5, h6 { 
+          page-break-after: avoid;
+          page-break-inside: avoid;
+        }
+        
+        /* Job experience sections should stay together when possible */
+        .job-section, .experience-item {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        
+        /* Allow content to flow across pages */
+        .resume-layout {
+          page-break-inside: auto;
+        }
+        .left-column, .right-column {
+          page-break-inside: auto;
+        }
+        
+        /* Prevent widows and orphans */
+        p, li {
+          orphans: 2;
+          widows: 2;
+        }
+        
+        /* Ensure lists stay together with their headers */
+        h3 + ul {
+          page-break-before: avoid;
+        }
+        
+        /* Force page breaks for very long content if needed */
+        .page-break-before { page-break-before: always; }
+        .page-break-after { page-break-after: always; }
+        tr, td {
+          page-break-inside: auto;
+        }
+        p {
+          page-break-inside: avoid;
+          orphans: 2;
+          widows: 2;
+        }
+        ul, ol {
+          page-break-inside: auto;
+        }
+        li {
+          page-break-inside: avoid;
+        }
       `;
 
-      // Create iframe for PDF generation
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.left = '-10000px';
-      iframe.style.top = '0';
-      iframe.style.width = '8.5in';
-      iframe.style.height = '11in';
-      iframe.style.border = 'none';
-      iframe.style.backgroundColor = 'white';
-      document.body.appendChild(iframe);
-
-      // Wait for iframe to load
-      await new Promise<void>((resolve) => {
-        iframe.onload = () => resolve();
-        
-        const doc = iframe.contentDocument!;
-        doc.open();
-        doc.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <style>
-                ${pdfStyles}
-              </style>
-            </head>
-            <body>
-              <div class="resume-container">
-                ${htmlContent}
-              </div>
-            </body>
-          </html>
-        `);
-        doc.close();
-      });
-
-      // Wait longer for fonts and content to fully load
+      // Create a temporary container with proper PDF styling
+      const pdfContainer = document.createElement('div');
+      pdfContainer.style.position = 'fixed';
+      pdfContainer.style.left = '-10000px';
+      pdfContainer.style.top = '0';
+      pdfContainer.style.width = '8.5in';
+      pdfContainer.style.backgroundColor = 'white';
+      pdfContainer.style.fontFamily = 'Arial, sans-serif';
+      pdfContainer.innerHTML = `
+        <style>
+          ${pdfStyles}
+        </style>
+        <div class="resume-container">
+          ${htmlContent}
+        </div>
+      `;
+      
+      document.body.appendChild(pdfContainer);
+      
+      // Wait for fonts and content to fully load
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const resumeElement = iframe.contentDocument!.body;
+      const resumeElement = pdfContainer;
+      
+      // Debug: Log the actual content being processed
+      console.log('PDF Generation Debug - VERSION 2.0 WITH BULLET FIXES:');
+      console.log('Original htmlContent length:', htmlContent.length);
+      console.log('Container content:', resumeElement.innerHTML.substring(0, 500) + '...');
+      console.log('Container height:', resumeElement.scrollHeight + 'px');
+      console.log('Container child count:', resumeElement.children.length);
+      console.log('CSS bullet styling applied - using li::before pseudo-elements');
 
       try {
-        // Use html2pdf with optimized settings for better layout
+        // Use html2pdf with optimized settings for multi-page layout
         if (typeof (window as any).html2pdf !== 'undefined') {
           const opt = {
             margin: [0.4, 0.4, 0.4, 0.4], // Minimal margins in inches
@@ -407,22 +464,36 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
               useCORS: true,
               allowTaint: true,
               backgroundColor: '#ffffff',
-              logging: false,
+              logging: true, // Enable logging to debug issues
               letterRendering: true,
-              width: 816, // 8.5 inches * 96 DPI
-              height: 1056, // 11 inches * 96 DPI
               scrollX: 0,
-              scrollY: 0
+              scrollY: 0,
+              removeContainer: false
+              // Remove all size constraints to let html2canvas auto-detect content size
             },
             jsPDF: { 
               unit: 'in', 
               format: 'letter', 
               orientation: 'portrait',
-              compress: true
+              compress: true,
+              putOnlyUsedFonts: true,
+              floatPrecision: 16
+            },
+            enableLinks: false,
+            pagebreak: { 
+              mode: ['css', 'legacy'],
+              before: '.page-break-before',
+              after: '.page-break-after',
+              avoid: 'h1, h2, h3'
             }
           };
 
-          await (window as any).html2pdf().set(opt).from(resumeElement).save();
+          // Use html2pdf with explicit worker chain for better control
+          const worker = (window as any).html2pdf();
+          await worker.set(opt).from(resumeElement).toPdf().get('pdf').then(function (pdf: any) {
+            // Log page count for debugging
+            console.log('Generated PDF has', pdf.internal.getNumberOfPages(), 'page(s)');
+          }).save();
         } else {
           throw new Error('html2pdf not available');
         }
@@ -478,7 +549,7 @@ export const ResultPreview: React.FC<ResultPreviewProps> = ({ htmlContent, expla
       }
 
       // Clean up
-      document.body.removeChild(iframe);
+      document.body.removeChild(pdfContainer);
 
     } catch (error: any) {
       console.error('PDF export failed:', error);

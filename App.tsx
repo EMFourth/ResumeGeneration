@@ -11,7 +11,7 @@ import { generateTailoredResume, generateCoverLetter } from './services/geminiSe
 import { InitialStatePlaceholder } from './components/InitialStatePlaceholder';
 import { sampleResumeHtml } from './components/SampleResume';
 import { GoogleAd } from './components/GoogleAd';
-import { AdsterraSquare, AdsterraSkyscraper } from './components/AdsterraAd';
+import { AdsterraSquare } from './components/AdsterraAd';
 
 const App: React.FC = () => {
   const [resumeText, setResumeText] = useState('');
@@ -159,9 +159,9 @@ const App: React.FC = () => {
           </div>
           </div>
           
-          {/* Sidebar with Skyscraper Ad */}
+          {/* Sidebar - Removed skyscraper ad */}
           <div className="w-full lg:w-48 flex justify-center lg:justify-start">
-            <AdsterraSkyscraper className="lg:sticky lg:top-4 w-full lg:w-auto" />
+            {/* Skyscraper ad removed as requested */}
           </div>
         </div>
       </main>
